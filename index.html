@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wormoney v1.2 - Mobile Optimized</title>
+    <title>Wormoney v1.3 - Hybrid (PC/Mobile)</title>
     <style>
         body, html {
             margin: 0;
@@ -54,7 +54,7 @@
             z-index: 10000;
             display: flex;
             background: rgba(10, 10, 15, 0.95);
-            backdrop-filter: blur(5px); /* Reduced blur for performance on modal load */
+            backdrop-filter: blur(5px);
             font-family: 'Segoe UI', sans-serif;
             touch-action: none;
         }
@@ -187,16 +187,18 @@
             <div class="icon-area">📱</div>
             <div class="control-title">MOBILE</div>
             <div class="control-desc">
-                Left Side: Dynamic Joystick<br>
-                Right Side: Hold to Boost
+                Fast & Optimized<br>
+                Static Background<br>
+                Joystick Controls
             </div>
         </div>
         <div class="control-option" onclick="ControlManager.setMode('desktop')">
             <div class="icon-area">💻</div>
             <div class="control-title">DESKTOP</div>
             <div class="control-desc">
-                Mouse to Steer<br>
-                Click to Boost
+                Full Visuals<br>
+                Animated Background<br>
+                Mouse Controls
             </div>
         </div>
     </div>
@@ -209,8 +211,12 @@
             hexGap: 9, 
             hue: 215,
             saturation: 9,
-            // Optimization: Fixed brightness values, removed animSpeed
             lightnessEdge: 2.5,
+            // Dynamic params (for PC)
+            centerMinL: 4.2,
+            centerMaxL: 6.8,
+            animSpeed: 0.001,
+            // Static params (for Mobile)
             centerL: 5.5, 
         };
 
@@ -221,7 +227,8 @@
             targetLengthPx: 82, 
             radius: 9.2,
             skinColor: '#1a52bd', 
-            renderGap: 1, 
+            renderGap: 1,
+            eyeFollowSpeed: 0.15, // Restored for PC
             targetVisibleArea: 300000 
         };
 
@@ -250,7 +257,8 @@
             mouseDown: false,
             camera: { x: 0, y: 0 },
             globalTime: 0,
-            currentWorldRadius: WORLD_RADIUS
+            currentWorldRadius: WORLD_RADIUS,
+            highQuality: false // Toggled by ControlManager
         };
 
         gameState.mouseX = gameState.width / 2;
@@ -268,13 +276,21 @@
         function getLerpFactor(baseRate, timeScale) {
             return 1 - Math.pow(1 - baseRate, timeScale);
         }
+        
+        function getPseudoRandom(x, y) {
+            return Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+        }
 
-        // --- SNAKE CLASS (OPTIMIZED) ---
+        // --- SNAKE CLASS ---
         class Snake {
             constructor() {
                 this.headSprite = this.createHeadBase(GAME_CONFIG.skinColor);
                 this.reset();
-                // Optimization: Removed blinkTimer, blinkState, eyeOpenness
+                
+                // Animation States (Restored for PC)
+                this.blinkTimer = 0;
+                this.blinkState = 0; 
+                this.eyeOpenness = 1.0;
             }
 
             reset() {
@@ -282,7 +298,7 @@
                 this.y = 0;
                 this.angle = -Math.PI / 2;
                 this.targetAngle = this.angle;
-                // Optimization: Removed lookAngle
+                this.lookAngle = 0; // Restored
                 this.radius = GAME_CONFIG.radius;
                 
                 this.path = [];
@@ -293,6 +309,8 @@
                 
                 this.boosting = false;
                 this.dashOffset = 0; 
+                this.blinkTimer = Math.random() * 200 + 100;
+                this.eyeOpenness = 1.0;
             }
 
             createHeadBase(colorHex) {
@@ -309,7 +327,6 @@
                 cx.arc(center, center, r, 0, Math.PI*2);
                 cx.fill();
 
-                // Optimization: Simple gradient, calculated once here
                 const grad = cx.createRadialGradient(
                     center - r*0.3, center - r*0.3, 0,
                     center, center, r
@@ -337,7 +354,32 @@
                 const turnRate = getLerpFactor(GAME_CONFIG.turnSpeed, timeScale);
                 this.angle = lerpAngle(this.angle, this.targetAngle, turnRate);
 
-                // Optimization: Removed eye look angle calculations (eyes fixed forward)
+                // --- PC ONLY: Eye Movement Logic ---
+                if (gameState.highQuality) {
+                    let desiredLookAngle = this.targetAngle - this.angle;
+                    while (desiredLookAngle > Math.PI) desiredLookAngle -= Math.PI * 2;
+                    while (desiredLookAngle < -Math.PI) desiredLookAngle += Math.PI * 2;
+                    const maxEyeAngle = Math.PI / 2.2; 
+                    if (desiredLookAngle > maxEyeAngle) desiredLookAngle = maxEyeAngle;
+                    if (desiredLookAngle < -maxEyeAngle) desiredLookAngle = -maxEyeAngle;
+
+                    const eyeRate = getLerpFactor(GAME_CONFIG.eyeFollowSpeed, timeScale);
+                    this.lookAngle = lerpAngle(this.lookAngle, desiredLookAngle, eyeRate);
+                    
+                    // Blink Logic
+                    this.blinkTimer -= timeScale;
+                    const blinkSpeed = 10; 
+                    if (this.blinkState === 0) { 
+                        if (this.blinkTimer <= 0) { this.blinkState = 1; this.blinkTimer = blinkSpeed; }
+                        this.eyeOpenness = 1.0;
+                    } else if (this.blinkState === 1) { 
+                        if (this.blinkTimer <= 0) { this.blinkState = 2; this.blinkTimer = blinkSpeed; }
+                        this.eyeOpenness = Math.max(0, this.blinkTimer / blinkSpeed);
+                    } else if (this.blinkState === 2) { 
+                        if (this.blinkTimer <= 0) { this.blinkState = 0; this.blinkTimer = Math.random() * 200 + 150; }
+                        this.eyeOpenness = 1.0 - Math.max(0, this.blinkTimer / blinkSpeed);
+                    }
+                }
 
                 let currentSpeed = this.boosting ? GAME_CONFIG.boostSpeed : GAME_CONFIG.baseSpeed;
                 currentSpeed *= timeScale;
@@ -379,7 +421,6 @@
                     }
                     accumulatedLen += dist;
                 }
-                // Optimization: Removed blink timer logic
             }
 
             draw(ctx) {
@@ -388,8 +429,7 @@
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
 
-                // 1. Shadow (Optimized: Removed blur for performance or kept very low)
-                // Shadows are expensive on mobile. We simulate shadow with transparency and offset but no blur.
+                // 1. Shadow (Restored for PC)
                 ctx.beginPath();
                 ctx.moveTo(this.path[0].x + 4, this.path[0].y + 6); 
                 for (let i = 1; i < this.path.length; i++) {
@@ -397,10 +437,18 @@
                 }
                 ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
                 ctx.lineWidth = this.radius * 2 + 2;
-                // ctx.shadowBlur = 10; // REMOVED FOR PERFORMANCE
+                if (gameState.highQuality) {
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = "rgba(0,0,0,0.5)";
+                }
                 ctx.stroke();
                 
-                // 2. Glow when boosting (Optimized: Reduced blur)
+                if (gameState.highQuality) {
+                    ctx.shadowBlur = 0;
+                    ctx.shadowColor = "transparent";
+                }
+
+                // 2. Glow when boosting (Restored for PC)
                 if (this.boosting) {
                     ctx.beginPath();
                     ctx.moveTo(this.path[0].x, this.path[0].y);
@@ -409,8 +457,12 @@
                     }
                     ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
                     ctx.lineWidth = this.radius * 2 + 6;
-                    // ctx.shadowBlur = 15; // REMOVED FOR PERFORMANCE
+                    if (gameState.highQuality) {
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = "white";
+                    }
                     ctx.stroke();
+                    if (gameState.highQuality) ctx.shadowBlur = 0;
                 }
 
                 // 3. Main body
@@ -430,7 +482,16 @@
                 ctx.rotate(this.angle);
                 ctx.drawImage(this.headSprite, -headOffset, -headOffset);
 
-                // --- EYES (STATIC - OPTIMIZED) ---
+                // --- EYES ---
+                if (gameState.highQuality) {
+                    this.drawDynamicEyes(ctx);
+                } else {
+                    this.drawStaticEyes(ctx);
+                }
+                ctx.restore();
+            }
+
+            drawStaticEyes(ctx) {
                 const drawStaticEye = (side) => {
                     const eyeX = this.radius * 0.4;
                     const eyeY = (side === 'left' ? -1 : 1) * (this.radius * 0.55);
@@ -439,22 +500,19 @@
                     ctx.save();
                     ctx.translate(eyeX, eyeY);
                     
-                    // Sclera
                     ctx.fillStyle = '#f0f0f0';
                     ctx.beginPath();
                     ctx.arc(0, 0, eyeRadius, 0, Math.PI*2);
                     ctx.fill();
 
-                    // Pupil (Static, fixed forward)
                     const pupilSize = eyeRadius * 0.6;
-                    const pDx = eyeRadius * 0.2; // Slightly forward
+                    const pDx = eyeRadius * 0.2; 
                     
                     ctx.fillStyle = "#111"; 
                     ctx.beginPath();
                     ctx.arc(pDx, 0, pupilSize, 0, Math.PI*2);
                     ctx.fill();
 
-                    // Glint (Static)
                     ctx.fillStyle = "rgba(255,255,255,0.9)";
                     ctx.beginPath();
                     ctx.arc(pDx - pupilSize*0.3, -pupilSize*0.3, pupilSize*0.25, 0, Math.PI*2);
@@ -462,16 +520,76 @@
 
                     ctx.restore();
                 };
-
                 drawStaticEye('left');
                 drawStaticEye('right');
-                ctx.restore();
+            }
+
+            drawDynamicEyes(ctx) {
+                const drawEye = (side) => {
+                    const eyeX = this.radius * 0.4;
+                    const eyeY = (side === 'left' ? -1 : 1) * (this.radius * 0.55);
+                    const eyeRadius = this.radius * 0.42;
+
+                    if (this.eyeOpenness < 0.1) {
+                        ctx.save();
+                        ctx.translate(eyeX, eyeY);
+                        ctx.beginPath();
+                        ctx.moveTo(-eyeRadius, 0);
+                        ctx.lineTo(eyeRadius, 0);
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeStyle = "#333";
+                        ctx.stroke();
+                        ctx.restore();
+                        return;
+                    }
+
+                    ctx.save();
+                    ctx.translate(eyeX, eyeY);
+                    
+                    const blinkScale = this.eyeOpenness;
+                    ctx.scale(1, blinkScale);
+
+                    const scleraGrad = ctx.createRadialGradient(-2, -2, 1, 0, 0, eyeRadius);
+                    scleraGrad.addColorStop(0, '#ffffff');
+                    scleraGrad.addColorStop(1, '#e6e6e6');
+                    ctx.fillStyle = scleraGrad;
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, eyeRadius, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.strokeStyle = "rgba(0,0,0,0.15)";
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+
+                    const pupilSize = eyeRadius * 0.55;
+                    const maxLookAngle = Math.PI / 2.2;
+                    const turnIntensity = Math.min(1, Math.abs(this.lookAngle) / maxLookAngle);
+                    const dynamicRange = 0.3 + (0.15 * turnIntensity);
+                    const pupilRange = eyeRadius * dynamicRange;
+                    
+                    const pDx = Math.cos(this.lookAngle) * pupilRange;
+                    const pDy = Math.sin(this.lookAngle) * pupilRange;
+
+                    ctx.fillStyle = "#111"; 
+                    ctx.beginPath();
+                    ctx.arc(pDx, pDy, pupilSize, 0, Math.PI*2);
+                    ctx.fill();
+
+                    if (this.eyeOpenness > 0.4) {
+                        ctx.fillStyle = "rgba(255,255,255,0.9)";
+                        ctx.beginPath();
+                        ctx.arc(pDx - pupilSize*0.3, pDy - pupilSize*0.3, pupilSize*0.25, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                    ctx.restore();
+                };
+                drawEye('left');
+                drawEye('right');
             }
         }
 
-        // --- BACKGROUND (OPTIMIZED) ---
-        function drawBackground(ctx, camX, camY) {
-            // Optimization: No timestamp dependency, static rendering
+        // --- BACKGROUND ---
+        function drawBackground(ctx, camX, camY, timestamp) {
             const viewportW = gameState.width / gameState.gameZoom;
             const viewportH = gameState.height / gameState.gameZoom;
 
@@ -487,8 +605,8 @@
             const cols = Math.ceil(viewportW / xStep) + 2;
             const rows = Math.ceil(viewportH / yStep) + 2;
 
-            // Pre-calculate colors outside loop
-            const colorCenter = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.centerL}%)`;
+            // Pre-calculate colors for Mobile
+            const colorCenterStatic = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.centerL}%)`;
             const colorEdge = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.lightnessEdge}%)`;
             const drawR = Math.max(0, r - (BG_CONFIG.hexGap / 2));
 
@@ -498,9 +616,17 @@
                     let hexWorldY = row * yStep;
                     if (col % 2 !== 0) hexWorldY += yStep / 2;
 
-                    // Optimization: Removed gradient per hex. Use solid color or simple static gradient.
-                    // Using a static gradient is cheaper than calculating sine waves.
-                    
+                    let colorCenter = colorCenterStatic;
+
+                    // --- PC ONLY: Animated Background ---
+                    if (gameState.highQuality) {
+                        const phase = Math.abs(getPseudoRandom(col, row) % (Math.PI * 2));
+                        const sinVal = Math.sin(timestamp * BG_CONFIG.animSpeed + phase);
+                        const normVal = (sinVal + 1) / 2;
+                        const currentCenterL = BG_CONFIG.centerMinL + (BG_CONFIG.centerMaxL - BG_CONFIG.centerMinL) * normVal;
+                        colorCenter = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${currentCenterL}%)`;
+                    }
+
                     ctx.beginPath();
                     for (let i = 0; i < 6; i++) {
                         const angle = (Math.PI / 180) * (60 * i);
@@ -511,9 +637,6 @@
                     }
                     ctx.closePath();
 
-                    // Using the pre-calculated static color. 
-                    // Ideally for max performance we'd use ctx.fillStyle = colorCenter; ctx.fill(); 
-                    // But maintaining a slight gradient for aesthetics is okay if it's not re-calculated.
                     const gradient = ctx.createRadialGradient(hexWorldX, hexWorldY, 0, hexWorldX, hexWorldY, drawR);
                     gradient.addColorStop(0, colorCenter);
                     gradient.addColorStop(1, colorEdge);
@@ -540,9 +663,13 @@
                 document.getElementById('control-modal').style.display = 'none';
 
                 if (mode === 'desktop') {
+                    // ENABLE HIGH QUALITY
+                    gameState.highQuality = true;
                     this.initDesktop();
                     document.getElementById('desktop-hint').style.display = 'block';
                 } else if (mode === 'mobile') {
+                    // DISABLE HIGH QUALITY (Optimized)
+                    gameState.highQuality = false;
                     this.initMobile();
                     document.getElementById('desktop-hint').style.display = 'none';
                     document.getElementById('hint-move').style.display = 'block';
@@ -683,7 +810,7 @@
             ctx.scale(gameState.gameZoom, gameState.gameZoom);
             ctx.translate(-gameState.camera.x, -gameState.camera.y);
 
-            drawBackground(ctx, gameState.camera.x, gameState.camera.y);
+            drawBackground(ctx, gameState.camera.x, gameState.camera.y, timestamp);
 
             // Boundary
             const zoneThickness = 400; 
@@ -717,7 +844,21 @@
             // --- INTERFACE LAYER ---
             ctx.resetTransform();
             
-            // 2. MINIMAP (Vignette removed to save fillRect overdraw)
+            // 2. VIGNETTE (PC ONLY) - Возвращаем затемнение только для ПК
+            if (gameState.highQuality) {
+                const vRadius = Math.hypot(gameState.width/2, gameState.height/2); 
+                const vGrad = ctx.createRadialGradient(
+                    gameState.width / 2, gameState.height / 2, vRadius * 0.4, 
+                    gameState.width / 2, gameState.height / 2, vRadius
+                );
+                vGrad.addColorStop(0, 'rgba(0,0,0,0)');
+                vGrad.addColorStop(1, 'rgba(0,0,0,0.95)');
+                
+                ctx.fillStyle = vGrad;
+                ctx.fillRect(0, 0, gameState.width, gameState.height);
+            }
+            
+            // 3. MINIMAP
             drawMinimap(ctx);
 
             requestAnimationFrame(gameLoop);
