@@ -727,23 +727,40 @@
                     const x = e.clientX;
                     const y = e.clientY;
 
+                    // CRITICAL FIX: Capture pointer to canvas. 
+                    // This guarantees we get the 'pointerup' event even if the finger 
+                    // drifts off-screen or into browser UI, preventing "stuck" controls.
+                    if (canvas.setPointerCapture) {
+                        try {
+                            canvas.setPointerCapture(e.pointerId);
+                        } catch (err) {
+                            // Ignore rare capture errors
+                        }
+                    }
+
                     // LEFT HALF -> Joystick
                     if (x < window.innerWidth / 2) {
-                        // Only start joystick if not already active
-                        if (!this.joystickData.active) {
-                            this.joystickData.active = true;
-                            this.joystickData.id = e.pointerId; // Critical: distinct ID
-                            this.joystickData.origin = { x, y };
-                            this.joystickData.current = { x, y };
-
-                            // Visuals
-                            joystickBase.style.display = 'block';
-                            joystickBase.style.left = x + 'px';
-                            joystickBase.style.top = y + 'px';
-                            joystickStick.style.transform = `translate(-50%, -50%)`;
-                            
-                            document.getElementById('hint-move').style.display = 'none';
+                        // SELF-HEALING LOGIC:
+                        // If logic thinks joystick is active but user is tapping again,
+                        // it means the previous 'up' was lost (stuck). 
+                        // We reset it here to accept the new touch immediately.
+                        if (this.joystickData.active) {
+                            this.joystickData.active = false;
+                            joystickBase.style.display = 'none';
                         }
+
+                        this.joystickData.active = true;
+                        this.joystickData.id = e.pointerId; // Critical: distinct ID
+                        this.joystickData.origin = { x, y };
+                        this.joystickData.current = { x, y };
+
+                        // Visuals
+                        joystickBase.style.display = 'block';
+                        joystickBase.style.left = x + 'px';
+                        joystickBase.style.top = y + 'px';
+                        joystickStick.style.transform = `translate(-50%, -50%)`;
+                        
+                        document.getElementById('hint-move').style.display = 'none';
                     } 
                     // RIGHT HALF -> Boost
                     else {
@@ -786,6 +803,11 @@
                         this.joystickData.active = false;
                         this.joystickData.id = null;
                         joystickBase.style.display = 'none';
+                        
+                        // Release capture if held
+                        if (canvas.releasePointerCapture) {
+                             try { canvas.releasePointerCapture(e.pointerId); } catch(e){}
+                        }
                     }
 
                     // Release Boost
@@ -795,6 +817,9 @@
                         if (this.boostPointers.size === 0) {
                             gameState.mouseDown = false;
                         }
+                        if (canvas.releasePointerCapture) {
+                             try { canvas.releasePointerCapture(e.pointerId); } catch(e){}
+                        }
                     }
                 };
 
@@ -803,6 +828,9 @@
                 window.addEventListener('pointermove', onPointerMove, { passive: false });
                 window.addEventListener('pointerup', onPointerUp, { passive: false });
                 window.addEventListener('pointercancel', onPointerUp, { passive: false });
+                // Safety net: if pointer leaves window completely (e.g. alt-tab)
+                window.addEventListener('pointerleave', onPointerUp, { passive: false });
+                
                 // Also handle contextmenu to prevent right-click popup on desktop testing
                 window.addEventListener('contextmenu', e => e.preventDefault());
             }
