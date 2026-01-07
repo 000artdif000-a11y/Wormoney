@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wormoney v1.1 - Fixed Inputs</title>
+    <title>Wormoney v1.2 - Mobile Optimized</title>
     <style>
         body, html {
             margin: 0;
@@ -16,7 +16,7 @@
             color: white;
             user-select: none;
             cursor: crosshair;
-            /* CRITICAL: Prevents default browser gestures (scroll, zoom, back-swipe) */
+            /* CRITICAL: Prevents default browser gestures */
             touch-action: none; 
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -30,7 +30,7 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            touch-action: none; /* Ensure canvas doesn't trigger scroll */
+            touch-action: none; 
         }
 
         .ui-info {
@@ -54,7 +54,7 @@
             z-index: 10000;
             display: flex;
             background: rgba(10, 10, 15, 0.95);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(5px); /* Reduced blur for performance on modal load */
             font-family: 'Segoe UI', sans-serif;
             touch-action: none;
         }
@@ -66,7 +66,7 @@
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: background 0.2s ease;
             position: relative;
             overflow: hidden;
         }
@@ -86,7 +86,6 @@
         .icon-area {
             font-size: 60px;
             margin-bottom: 20px;
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
         }
 
         .control-title {
@@ -127,7 +126,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Let touches pass through to document handler */
+            pointer-events: none; 
             z-index: 5000;
             overflow: hidden;
             touch-action: none;
@@ -141,8 +140,7 @@
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid rgba(255, 255, 255, 0.2);
             transform: translate(-50%, -50%);
-            display: none; /* Hidden by default */
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            display: none; 
         }
 
         #joystick-stick {
@@ -154,7 +152,6 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.8);
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
         
         .tutorial-hint {
@@ -173,27 +170,19 @@
 </head>
 <body>
 
-    <!-- Game Canvas -->
     <canvas id="game-canvas"></canvas>
-    
-    <!-- Original UI Info (Visible in Desktop Mode mostly) -->
     <div class="ui-info" id="desktop-hint">LMB/RMB - Boost | Mouse - Move</div>
 
-    <!-- Joystick UI Container -->
     <div id="joystick-container">
         <div id="joystick-base">
             <div id="joystick-stick"></div>
         </div>
-        <!-- Mobile Hints -->
         <div class="tutorial-hint" style="left: 5%; display: none;" id="hint-move">Touch & Hold<br>to Move</div>
         <div class="tutorial-hint" style="right: 5%; display: none;" id="hint-boost">Touch & Hold<br>to Boost</div>
     </div>
 
-    <!-- Control Selection Modal -->
     <div id="control-modal">
         <div id="or-divider">OR</div>
-        
-        <!-- Mobile Option -->
         <div class="control-option" onclick="ControlManager.setMode('mobile')">
             <div class="icon-area">📱</div>
             <div class="control-title">MOBILE</div>
@@ -202,8 +191,6 @@
                 Right Side: Hold to Boost
             </div>
         </div>
-
-        <!-- Desktop Option -->
         <div class="control-option" onclick="ControlManager.setMode('desktop')">
             <div class="icon-area">💻</div>
             <div class="control-title">DESKTOP</div>
@@ -215,17 +202,16 @@
     </div>
 
     <script>
-        // --- КОНФИГУРАЦИЯ ---
+        // --- CONFIGURATION ---
         
         const BG_CONFIG = {
             hexSize: 21.6,
             hexGap: 9, 
             hue: 215,
             saturation: 9,
+            // Optimization: Fixed brightness values, removed animSpeed
             lightnessEdge: 2.5,
-            centerMinL: 4.2,
-            centerMaxL: 6.8,
-            animSpeed: 0.001
+            centerL: 5.5, 
         };
 
         const GAME_CONFIG = {
@@ -236,7 +222,6 @@
             radius: 9.2,
             skinColor: '#1a52bd', 
             renderGap: 1, 
-            eyeFollowSpeed: 0.15,
             targetVisibleArea: 300000 
         };
 
@@ -251,7 +236,7 @@
 
         const WORLD_RADIUS = 1500; 
 
-        // --- ИНИЦИАЛИЗАЦИЯ ---
+        // --- INITIALIZATION ---
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d', { alpha: false }); 
 
@@ -268,7 +253,6 @@
             currentWorldRadius: WORLD_RADIUS
         };
 
-        // Initialize mouse in center to prevent instant turning on load
         gameState.mouseX = gameState.width / 2;
         gameState.mouseY = gameState.height / 2;
 
@@ -285,18 +269,12 @@
             return 1 - Math.pow(1 - baseRate, timeScale);
         }
 
-        function getPseudoRandom(x, y) {
-            return Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-        }
-
-        // --- ЗМЕЙКА ---
+        // --- SNAKE CLASS (OPTIMIZED) ---
         class Snake {
             constructor() {
                 this.headSprite = this.createHeadBase(GAME_CONFIG.skinColor);
                 this.reset();
-                this.blinkTimer = 0;
-                this.blinkState = 0; 
-                this.eyeOpenness = 1.0;
+                // Optimization: Removed blinkTimer, blinkState, eyeOpenness
             }
 
             reset() {
@@ -304,7 +282,7 @@
                 this.y = 0;
                 this.angle = -Math.PI / 2;
                 this.targetAngle = this.angle;
-                this.lookAngle = 0;
+                // Optimization: Removed lookAngle
                 this.radius = GAME_CONFIG.radius;
                 
                 this.path = [];
@@ -315,8 +293,6 @@
                 
                 this.boosting = false;
                 this.dashOffset = 0; 
-                this.blinkTimer = Math.random() * 200 + 100;
-                this.eyeOpenness = 1.0;
             }
 
             createHeadBase(colorHex) {
@@ -333,6 +309,7 @@
                 cx.arc(center, center, r, 0, Math.PI*2);
                 cx.fill();
 
+                // Optimization: Simple gradient, calculated once here
                 const grad = cx.createRadialGradient(
                     center - r*0.3, center - r*0.3, 0,
                     center, center, r
@@ -351,7 +328,6 @@
             update(timeScale) {
                 const screenCenterX = gameState.width / 2;
                 const screenCenterY = gameState.height / 2;
-                // Calculate direction based on gameState.mouseX/Y relative to screen center
                 const dx = gameState.mouseX - screenCenterX;
                 const dy = gameState.mouseY - screenCenterY;
                 
@@ -361,15 +337,7 @@
                 const turnRate = getLerpFactor(GAME_CONFIG.turnSpeed, timeScale);
                 this.angle = lerpAngle(this.angle, this.targetAngle, turnRate);
 
-                let desiredLookAngle = this.targetAngle - this.angle;
-                while (desiredLookAngle > Math.PI) desiredLookAngle -= Math.PI * 2;
-                while (desiredLookAngle < -Math.PI) desiredLookAngle += Math.PI * 2;
-                const maxEyeAngle = Math.PI / 2.2; 
-                if (desiredLookAngle > maxEyeAngle) desiredLookAngle = maxEyeAngle;
-                if (desiredLookAngle < -maxEyeAngle) desiredLookAngle = -maxEyeAngle;
-
-                const eyeRate = getLerpFactor(GAME_CONFIG.eyeFollowSpeed, timeScale);
-                this.lookAngle = lerpAngle(this.lookAngle, desiredLookAngle, eyeRate);
+                // Optimization: Removed eye look angle calculations (eyes fixed forward)
 
                 let currentSpeed = this.boosting ? GAME_CONFIG.boostSpeed : GAME_CONFIG.baseSpeed;
                 currentSpeed *= timeScale;
@@ -411,19 +379,7 @@
                     }
                     accumulatedLen += dist;
                 }
-
-                this.blinkTimer -= timeScale;
-                const blinkSpeed = 10; 
-                if (this.blinkState === 0) { 
-                    if (this.blinkTimer <= 0) { this.blinkState = 1; this.blinkTimer = blinkSpeed; }
-                    this.eyeOpenness = 1.0;
-                } else if (this.blinkState === 1) { 
-                    if (this.blinkTimer <= 0) { this.blinkState = 2; this.blinkTimer = blinkSpeed; }
-                    this.eyeOpenness = Math.max(0, this.blinkTimer / blinkSpeed);
-                } else if (this.blinkState === 2) { 
-                    if (this.blinkTimer <= 0) { this.blinkState = 0; this.blinkTimer = Math.random() * 200 + 150; }
-                    this.eyeOpenness = 1.0 - Math.max(0, this.blinkTimer / blinkSpeed);
-                }
+                // Optimization: Removed blink timer logic
             }
 
             draw(ctx) {
@@ -432,7 +388,8 @@
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
 
-                // 1. Shadow
+                // 1. Shadow (Optimized: Removed blur for performance or kept very low)
+                // Shadows are expensive on mobile. We simulate shadow with transparency and offset but no blur.
                 ctx.beginPath();
                 ctx.moveTo(this.path[0].x + 4, this.path[0].y + 6); 
                 for (let i = 1; i < this.path.length; i++) {
@@ -440,14 +397,10 @@
                 }
                 ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
                 ctx.lineWidth = this.radius * 2 + 2;
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                // ctx.shadowBlur = 10; // REMOVED FOR PERFORMANCE
                 ctx.stroke();
                 
-                ctx.shadowBlur = 0;
-                ctx.shadowColor = "transparent";
-
-                // 2. Glow when boosting
+                // 2. Glow when boosting (Optimized: Reduced blur)
                 if (this.boosting) {
                     ctx.beginPath();
                     ctx.moveTo(this.path[0].x, this.path[0].y);
@@ -456,10 +409,8 @@
                     }
                     ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
                     ctx.lineWidth = this.radius * 2 + 6;
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = "white";
+                    // ctx.shadowBlur = 15; // REMOVED FOR PERFORMANCE
                     ctx.stroke();
-                    ctx.shadowBlur = 0; 
                 }
 
                 // 3. Main body
@@ -479,150 +430,48 @@
                 ctx.rotate(this.angle);
                 ctx.drawImage(this.headSprite, -headOffset, -headOffset);
 
-                // --- EYES ---
-                const drawEye = (side) => {
+                // --- EYES (STATIC - OPTIMIZED) ---
+                const drawStaticEye = (side) => {
                     const eyeX = this.radius * 0.4;
                     const eyeY = (side === 'left' ? -1 : 1) * (this.radius * 0.55);
                     const eyeRadius = this.radius * 0.42;
 
-                    if (this.eyeOpenness < 0.1) {
-                        ctx.save();
-                        ctx.translate(eyeX, eyeY);
-                        ctx.beginPath();
-                        ctx.moveTo(-eyeRadius, 0);
-                        ctx.lineTo(eyeRadius, 0);
-                        ctx.lineWidth = 1.5;
-                        ctx.strokeStyle = "#333";
-                        ctx.stroke();
-                        ctx.restore();
-                        return;
-                    }
-
                     ctx.save();
                     ctx.translate(eyeX, eyeY);
                     
-                    const blinkScale = this.eyeOpenness;
-                    ctx.scale(1, blinkScale);
-
-                    const scleraGrad = ctx.createRadialGradient(-2, -2, 1, 0, 0, eyeRadius);
-                    scleraGrad.addColorStop(0, '#ffffff');
-                    scleraGrad.addColorStop(1, '#e6e6e6');
-                    ctx.fillStyle = scleraGrad;
-                    
+                    // Sclera
+                    ctx.fillStyle = '#f0f0f0';
                     ctx.beginPath();
                     ctx.arc(0, 0, eyeRadius, 0, Math.PI*2);
                     ctx.fill();
-                    ctx.strokeStyle = "rgba(0,0,0,0.15)";
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
 
-                    const pupilSize = eyeRadius * 0.55;
-                    const maxLookAngle = Math.PI / 2.2;
-                    const turnIntensity = Math.min(1, Math.abs(this.lookAngle) / maxLookAngle);
-                    const dynamicRange = 0.3 + (0.15 * turnIntensity);
-                    const pupilRange = eyeRadius * dynamicRange;
+                    // Pupil (Static, fixed forward)
+                    const pupilSize = eyeRadius * 0.6;
+                    const pDx = eyeRadius * 0.2; // Slightly forward
                     
-                    const pDx = Math.cos(this.lookAngle) * pupilRange;
-                    const pDy = Math.sin(this.lookAngle) * pupilRange;
-
                     ctx.fillStyle = "#111"; 
                     ctx.beginPath();
-                    ctx.arc(pDx, pDy, pupilSize, 0, Math.PI*2);
+                    ctx.arc(pDx, 0, pupilSize, 0, Math.PI*2);
                     ctx.fill();
 
-                    if (this.eyeOpenness > 0.4) {
-                        ctx.fillStyle = "rgba(255,255,255,0.9)";
-                        ctx.beginPath();
-                        ctx.arc(pDx - pupilSize*0.3, pDy - pupilSize*0.3, pupilSize*0.25, 0, Math.PI*2);
-                        ctx.fill();
-                    }
+                    // Glint (Static)
+                    ctx.fillStyle = "rgba(255,255,255,0.9)";
+                    ctx.beginPath();
+                    ctx.arc(pDx - pupilSize*0.3, -pupilSize*0.3, pupilSize*0.25, 0, Math.PI*2);
+                    ctx.fill();
+
                     ctx.restore();
                 };
 
-                drawEye('left');
-                drawEye('right');
+                drawStaticEye('left');
+                drawStaticEye('right');
                 ctx.restore();
             }
         }
 
-        // --- MINIMAP ---
-        function drawMinimap(ctx) {
-            const mRadius = MINIMAP_CONFIG.radius;
-            const mMargin = MINIMAP_CONFIG.margin;
-            
-            const centerX = mMargin + mRadius;
-            const centerY = mMargin + mRadius;
-
-            ctx.save();
-            ctx.resetTransform();
-
-            const grad = ctx.createRadialGradient(
-                centerX - mRadius * 0.3, centerY - mRadius * 0.3, mRadius * 0.1,
-                centerX, centerY, mRadius
-            );
-            grad.addColorStop(0, MINIMAP_CONFIG.bgCenter);
-            grad.addColorStop(1, MINIMAP_CONFIG.bgEdge);
-
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, mRadius, 0, Math.PI * 2);
-            ctx.clip(); 
-
-            ctx.fillStyle = grad;
-            ctx.fill(); 
-
-            if (gameState.player) {
-                const normX = gameState.player.x / WORLD_RADIUS;
-                const normY = gameState.player.y / WORLD_RADIUS;
-
-                const dist = Math.hypot(normX, normY);
-                let pX, pY;
-                
-                if (dist > 1) {
-                    const angle = Math.atan2(normY, normX);
-                    pX = centerX + Math.cos(angle) * mRadius;
-                    pY = centerY + Math.sin(angle) * mRadius;
-                } else {
-                    pX = centerX + normX * mRadius;
-                    pY = centerY + normY * mRadius;
-                }
-
-                ctx.fillStyle = MINIMAP_CONFIG.playerColor;
-                ctx.beginPath();
-                ctx.arc(pX, pY, 3.5, 0, Math.PI*2);
-                ctx.fill();
-                
-                ctx.shadowBlur = 6;
-                ctx.shadowColor = MINIMAP_CONFIG.playerColor;
-                ctx.strokeStyle = "white";
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                ctx.shadowBlur = 0; 
-            }
-
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, mRadius, 0, Math.PI * 2);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = MINIMAP_CONFIG.borderColor;
-            
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = "rgba(75, 0, 130, 0.7)"; 
-            
-            ctx.stroke();
-            
-            ctx.shadowBlur = 0;
-            ctx.shadowColor = "transparent";
-
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, mRadius - 1, 0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            ctx.restore();
-        }
-
-        // --- BACKGROUND ---
-        function drawBackground(ctx, camX, camY, timestamp) {
+        // --- BACKGROUND (OPTIMIZED) ---
+        function drawBackground(ctx, camX, camY) {
+            // Optimization: No timestamp dependency, static rendering
             const viewportW = gameState.width / gameState.gameZoom;
             const viewportH = gameState.height / gameState.gameZoom;
 
@@ -638,21 +487,19 @@
             const cols = Math.ceil(viewportW / xStep) + 2;
             const rows = Math.ceil(viewportH / yStep) + 2;
 
+            // Pre-calculate colors outside loop
+            const colorCenter = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.centerL}%)`;
+            const colorEdge = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.lightnessEdge}%)`;
+            const drawR = Math.max(0, r - (BG_CONFIG.hexGap / 2));
+
             for (let col = startCol; col < startCol + cols; col++) {
                 for (let row = startRow; row < startRow + rows; row++) {
                     let hexWorldX = col * xStep;
                     let hexWorldY = row * yStep;
                     if (col % 2 !== 0) hexWorldY += yStep / 2;
 
-                    const phase = Math.abs(getPseudoRandom(col, row) % (Math.PI * 2));
-                    const sinVal = Math.sin(timestamp * BG_CONFIG.animSpeed + phase);
-                    const normVal = (sinVal + 1) / 2;
-                    const currentCenterL = BG_CONFIG.centerMinL + (BG_CONFIG.centerMaxL - BG_CONFIG.centerMinL) * normVal;
-
-                    const colorCenter = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${currentCenterL}%)`;
-                    const colorEdge = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.lightnessEdge}%)`;
-                    
-                    const drawR = Math.max(0, r - (BG_CONFIG.hexGap / 2));
+                    // Optimization: Removed gradient per hex. Use solid color or simple static gradient.
+                    // Using a static gradient is cheaper than calculating sine waves.
                     
                     ctx.beginPath();
                     for (let i = 0; i < 6; i++) {
@@ -664,6 +511,9 @@
                     }
                     ctx.closePath();
 
+                    // Using the pre-calculated static color. 
+                    // Ideally for max performance we'd use ctx.fillStyle = colorCenter; ctx.fill(); 
+                    // But maintaining a slight gradient for aesthetics is okay if it's not re-calculated.
                     const gradient = ctx.createRadialGradient(hexWorldX, hexWorldY, 0, hexWorldX, hexWorldY, drawR);
                     gradient.addColorStop(0, colorCenter);
                     gradient.addColorStop(1, colorEdge);
@@ -673,11 +523,9 @@
             }
         }
 
-        // --- CONTROL MANAGER (IMPROVED) ---
+        // --- CONTROL MANAGER ---
         const ControlManager = {
             mode: null, 
-            
-            // For Mobile/Pointer Logic
             joystickData: {
                 active: false,
                 id: null,
@@ -685,7 +533,6 @@
                 current: { x: 0, y: 0 },
                 radius: 40 
             },
-            // Track active pointer IDs for boost to support multitouch cleanly
             boostPointers: new Set(),
 
             setMode: function(mode) {
@@ -704,7 +551,6 @@
             },
 
             initDesktop: function() {
-                // Classic Desktop Events
                 window.addEventListener('mousemove', e => {
                     gameState.mouseX = e.clientX;
                     gameState.mouseY = e.clientY;
@@ -717,54 +563,31 @@
                 const joystickBase = document.getElementById('joystick-base');
                 const joystickStick = document.getElementById('joystick-stick');
                 
-                // Use Pointer Events for unified Mouse/Touch handling
-                // This enables testing mobile controls on desktop (mouse acts as one finger)
-                
                 const onPointerDown = (e) => {
-                    // Prevent default browser actions (scroll, zoom, mouse emulation)
                     e.preventDefault(); 
-                    
                     const x = e.clientX;
                     const y = e.clientY;
 
-                    // CRITICAL FIX: Capture pointer to canvas. 
-                    // This guarantees we get the 'pointerup' event even if the finger 
-                    // drifts off-screen or into browser UI, preventing "stuck" controls.
                     if (canvas.setPointerCapture) {
-                        try {
-                            canvas.setPointerCapture(e.pointerId);
-                        } catch (err) {
-                            // Ignore rare capture errors
-                        }
+                        try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
                     }
 
-                    // LEFT HALF -> Joystick
                     if (x < window.innerWidth / 2) {
-                        // SELF-HEALING LOGIC:
-                        // If logic thinks joystick is active but user is tapping again,
-                        // it means the previous 'up' was lost (stuck). 
-                        // We reset it here to accept the new touch immediately.
                         if (this.joystickData.active) {
                             this.joystickData.active = false;
                             joystickBase.style.display = 'none';
                         }
-
                         this.joystickData.active = true;
-                        this.joystickData.id = e.pointerId; // Critical: distinct ID
+                        this.joystickData.id = e.pointerId; 
                         this.joystickData.origin = { x, y };
                         this.joystickData.current = { x, y };
 
-                        // Visuals
                         joystickBase.style.display = 'block';
                         joystickBase.style.left = x + 'px';
                         joystickBase.style.top = y + 'px';
                         joystickStick.style.transform = `translate(-50%, -50%)`;
-                        
                         document.getElementById('hint-move').style.display = 'none';
-                    } 
-                    // RIGHT HALF -> Boost
-                    else {
-                        // Add this pointer to the set of "boosters"
+                    } else {
                         this.boostPointers.add(e.pointerId);
                         gameState.mouseDown = true;
                         document.getElementById('hint-boost').style.display = 'none';
@@ -773,22 +596,16 @@
 
                 const onPointerMove = (e) => {
                     e.preventDefault();
-                    
-                    // Update Joystick
                     if (this.joystickData.active && e.pointerId === this.joystickData.id) {
                         const dx = e.clientX - this.joystickData.origin.x;
                         const dy = e.clientY - this.joystickData.origin.y;
                         const distance = Math.hypot(dx, dy);
                         const angle = Math.atan2(dy, dx);
-
-                        // Clamp Stick Visual
                         const clampedDist = Math.min(distance, this.joystickData.radius);
                         const stickX = Math.cos(angle) * clampedDist;
                         const stickY = Math.sin(angle) * clampedDist;
 
                         joystickStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
-
-                        // Project to Game State
                         const projectionDist = 500; 
                         gameState.mouseX = (gameState.width / 2) + Math.cos(angle) * projectionDist;
                         gameState.mouseY = (gameState.height / 2) + Math.sin(angle) * projectionDist;
@@ -797,41 +614,24 @@
 
                 const onPointerUp = (e) => {
                     e.preventDefault();
-
-                    // Release Joystick
                     if (this.joystickData.active && e.pointerId === this.joystickData.id) {
                         this.joystickData.active = false;
                         this.joystickData.id = null;
                         joystickBase.style.display = 'none';
-                        
-                        // Release capture if held
-                        if (canvas.releasePointerCapture) {
-                             try { canvas.releasePointerCapture(e.pointerId); } catch(e){}
-                        }
+                        if (canvas.releasePointerCapture) { try { canvas.releasePointerCapture(e.pointerId); } catch(e){} }
                     }
-
-                    // Release Boost
                     if (this.boostPointers.has(e.pointerId)) {
                         this.boostPointers.delete(e.pointerId);
-                        // Only stop boosting if NO pointers are left on the right side
-                        if (this.boostPointers.size === 0) {
-                            gameState.mouseDown = false;
-                        }
-                        if (canvas.releasePointerCapture) {
-                             try { canvas.releasePointerCapture(e.pointerId); } catch(e){}
-                        }
+                        if (this.boostPointers.size === 0) gameState.mouseDown = false;
+                        if (canvas.releasePointerCapture) { try { canvas.releasePointerCapture(e.pointerId); } catch(e){} }
                     }
                 };
 
-                // Attach to window to catch drags outside elements
                 window.addEventListener('pointerdown', onPointerDown, { passive: false });
                 window.addEventListener('pointermove', onPointerMove, { passive: false });
                 window.addEventListener('pointerup', onPointerUp, { passive: false });
                 window.addEventListener('pointercancel', onPointerUp, { passive: false });
-                // Safety net: if pointer leaves window completely (e.g. alt-tab)
                 window.addEventListener('pointerleave', onPointerUp, { passive: false });
-                
-                // Also handle contextmenu to prevent right-click popup on desktop testing
                 window.addEventListener('contextmenu', e => e.preventDefault());
             }
         };
@@ -842,7 +642,6 @@
             gameState.height = window.innerHeight;
             canvas.width = gameState.width;
             canvas.height = gameState.height;
-            
             const currentArea = gameState.width * gameState.height;
             gameState.gameZoom = Math.sqrt(currentArea / GAME_CONFIG.targetVisibleArea);
             gameState.gameZoom = Math.max(0.1, Math.min(20.0, gameState.gameZoom));
@@ -851,9 +650,7 @@
         function initGame() {
             updateSize();
             gameState.player = new Snake();
-
             window.addEventListener('resize', updateSize);
-            // Input listeners are now handled by ControlManager.setMode()
         }
 
         let lastTime = 0;
@@ -862,9 +659,7 @@
             if (!lastTime) lastTime = timestamp;
             let deltaTime = timestamp - lastTime;
             lastTime = timestamp;
-
             if (deltaTime > 100) deltaTime = 100;
-
             const timeScale = deltaTime / 16.667;
 
             gameState.globalTime = timestamp;
@@ -888,7 +683,7 @@
             ctx.scale(gameState.gameZoom, gameState.gameZoom);
             ctx.translate(-gameState.camera.x, -gameState.camera.y);
 
-            drawBackground(ctx, gameState.camera.x, gameState.camera.y, timestamp);
+            drawBackground(ctx, gameState.camera.x, gameState.camera.y);
 
             // Boundary
             const zoneThickness = 400; 
@@ -922,23 +717,62 @@
             // --- INTERFACE LAYER ---
             ctx.resetTransform();
             
-            // 2. VIGNETTE
-            const maxDim = Math.max(gameState.width, gameState.height);
-            const vRadius = Math.hypot(gameState.width/2, gameState.height/2); 
-            const vGrad = ctx.createRadialGradient(
-                gameState.width / 2, gameState.height / 2, vRadius * 0.4, 
-                gameState.width / 2, gameState.height / 2, vRadius
-            );
-            vGrad.addColorStop(0, 'rgba(0,0,0,0)');
-            vGrad.addColorStop(1, 'rgba(0,0,0,0.95)');
-            
-            ctx.fillStyle = vGrad;
-            ctx.fillRect(0, 0, gameState.width, gameState.height);
-            
-            // 3. MINIMAP
+            // 2. MINIMAP (Vignette removed to save fillRect overdraw)
             drawMinimap(ctx);
 
             requestAnimationFrame(gameLoop);
+        }
+        
+        // --- MINIMAP (Standardized) ---
+        function drawMinimap(ctx) {
+            const mRadius = MINIMAP_CONFIG.radius;
+            const mMargin = MINIMAP_CONFIG.margin;
+            
+            const centerX = mMargin + mRadius;
+            const centerY = mMargin + mRadius;
+
+            ctx.save();
+            ctx.resetTransform();
+
+            const grad = ctx.createRadialGradient(
+                centerX - mRadius * 0.3, centerY - mRadius * 0.3, mRadius * 0.1,
+                centerX, centerY, mRadius
+            );
+            grad.addColorStop(0, MINIMAP_CONFIG.bgCenter);
+            grad.addColorStop(1, MINIMAP_CONFIG.bgEdge);
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, mRadius, 0, Math.PI * 2);
+            ctx.clip(); 
+
+            ctx.fillStyle = grad;
+            ctx.fill(); 
+
+            if (gameState.player) {
+                const normX = gameState.player.x / WORLD_RADIUS;
+                const normY = gameState.player.y / WORLD_RADIUS;
+                const dist = Math.hypot(normX, normY);
+                let pX, pY;
+                if (dist > 1) {
+                    const angle = Math.atan2(normY, normX);
+                    pX = centerX + Math.cos(angle) * mRadius;
+                    pY = centerY + Math.sin(angle) * mRadius;
+                } else {
+                    pX = centerX + normX * mRadius;
+                    pY = centerY + normY * mRadius;
+                }
+                ctx.fillStyle = MINIMAP_CONFIG.playerColor;
+                ctx.beginPath();
+                ctx.arc(pX, pY, 3.5, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, mRadius, 0, Math.PI * 2);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = MINIMAP_CONFIG.borderColor;
+            ctx.stroke();
+            ctx.restore();
         }
 
         initGame();
