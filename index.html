@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wormoney v1.3 - Hybrid (PC/Mobile)</title>
+    <title>Wormoney v1.4 - High Performance</title>
     <style>
         body, html {
             margin: 0;
@@ -16,7 +16,6 @@
             color: white;
             user-select: none;
             cursor: crosshair;
-            /* CRITICAL: Prevents default browser gestures */
             touch-action: none; 
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -103,7 +102,6 @@
             line-height: 1.5;
         }
 
-        /* Visual Separator Text */
         #or-divider {
             position: absolute;
             top: 50%;
@@ -212,11 +210,9 @@
             hue: 215,
             saturation: 9,
             lightnessEdge: 2.5,
-            // Dynamic params (for PC)
             centerMinL: 4.2,
             centerMaxL: 6.8,
             animSpeed: 0.001,
-            // Static params (for Mobile)
             centerL: 5.5, 
         };
 
@@ -228,7 +224,7 @@
             radius: 9.2,
             skinColor: '#1a52bd', 
             renderGap: 1,
-            eyeFollowSpeed: 0.15, // Restored for PC
+            eyeFollowSpeed: 0.15,
             targetVisibleArea: 300000 
         };
 
@@ -258,7 +254,118 @@
             camera: { x: 0, y: 0 },
             globalTime: 0,
             currentWorldRadius: WORLD_RADIUS,
-            highQuality: false // Toggled by ControlManager
+            highQuality: false 
+        };
+
+        // --- RENDER CACHE (PERFORMANCE OPTIMIZATION) ---
+        const RenderCache = {
+            mobileHex: null,
+            minimapBg: null,
+            vignette: null,
+            hexOffsets: [],
+
+            init: function() {
+                // Pre-calculate hex geometry relative to center (0,0)
+                const r = BG_CONFIG.hexSize;
+                const drawR = Math.max(0, r - (BG_CONFIG.hexGap / 2));
+                this.hexOffsets = [];
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 180) * (60 * i);
+                    this.hexOffsets.push({
+                        x: drawR * Math.cos(angle),
+                        y: drawR * Math.sin(angle)
+                    });
+                }
+
+                this.updateMobileHex();
+                this.updateMinimap();
+            },
+
+            updateMobileHex: function() {
+                const r = BG_CONFIG.hexSize;
+                const drawR = Math.max(0, r - (BG_CONFIG.hexGap / 2));
+                const size = Math.ceil(drawR * 2 + 2);
+                
+                this.mobileHex = document.createElement('canvas');
+                this.mobileHex.width = size;
+                this.mobileHex.height = size;
+                const mCtx = this.mobileHex.getContext('2d');
+                const cx = size / 2;
+                const cy = size / 2;
+
+                const colorCenter = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.centerL}%)`;
+                const colorEdge = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.lightnessEdge}%)`;
+
+                mCtx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                     const angle = (Math.PI / 180) * (60 * i);
+                     const px = cx + drawR * Math.cos(angle);
+                     const py = cy + drawR * Math.sin(angle);
+                     if (i===0) mCtx.moveTo(px, py); else mCtx.lineTo(px, py);
+                }
+                mCtx.closePath();
+
+                const grad = mCtx.createRadialGradient(cx, cy, 0, cx, cy, drawR);
+                grad.addColorStop(0, colorCenter);
+                grad.addColorStop(1, colorEdge);
+                mCtx.fillStyle = grad;
+                mCtx.fill();
+            },
+
+            updateMinimap: function() {
+                const mRadius = MINIMAP_CONFIG.radius;
+                const mMargin = MINIMAP_CONFIG.margin;
+                const size = (mRadius + mMargin) * 2;
+                const centerX = size / 2;
+                const centerY = size / 2;
+
+                this.minimapBg = document.createElement('canvas');
+                this.minimapBg.width = size;
+                this.minimapBg.height = size;
+                const mCtx = this.minimapBg.getContext('2d');
+
+                const grad = mCtx.createRadialGradient(
+                    centerX - mRadius * 0.3, centerY - mRadius * 0.3, mRadius * 0.1,
+                    centerX, centerY, mRadius
+                );
+                grad.addColorStop(0, MINIMAP_CONFIG.bgCenter);
+                grad.addColorStop(1, MINIMAP_CONFIG.bgEdge);
+
+                mCtx.beginPath();
+                mCtx.arc(centerX, centerY, mRadius, 0, Math.PI * 2);
+                mCtx.clip(); 
+                mCtx.fillStyle = grad;
+                mCtx.fill(); 
+
+                // Border
+                mCtx.beginPath();
+                mCtx.arc(centerX, centerY, mRadius, 0, Math.PI * 2);
+                mCtx.lineWidth = 3;
+                mCtx.strokeStyle = MINIMAP_CONFIG.borderColor;
+                mCtx.stroke();
+            },
+
+            updateVignette: function(w, h) {
+                if (!gameState.highQuality) {
+                    this.vignette = null;
+                    return;
+                }
+                this.vignette = document.createElement('canvas');
+                this.vignette.width = w;
+                this.vignette.height = h;
+                const vCtx = this.vignette.getContext('2d');
+                
+                const vRadius = Math.hypot(w/2, h/2); 
+                const vGrad = vCtx.createRadialGradient(
+                    w / 2, h / 2, vRadius * 0.4, 
+                    w / 2, h / 2, vRadius
+                );
+                vGrad.addColorStop(0, 'rgba(0,0,0,0)');
+                vGrad.addColorStop(1, 'rgba(0,0,0,0.95)');
+                
+                vCtx.fillStyle = vGrad;
+                vCtx.fillRect(0, 0, w, h);
+            }
         };
 
         gameState.mouseX = gameState.width / 2;
@@ -286,8 +393,6 @@
             constructor() {
                 this.headSprite = this.createHeadBase(GAME_CONFIG.skinColor);
                 this.reset();
-                
-                // Animation States (Restored for PC)
                 this.blinkTimer = 0;
                 this.blinkState = 0; 
                 this.eyeOpenness = 1.0;
@@ -298,7 +403,7 @@
                 this.y = 0;
                 this.angle = -Math.PI / 2;
                 this.targetAngle = this.angle;
-                this.lookAngle = 0; // Restored
+                this.lookAngle = 0;
                 this.radius = GAME_CONFIG.radius;
                 
                 this.path = [];
@@ -354,7 +459,6 @@
                 const turnRate = getLerpFactor(GAME_CONFIG.turnSpeed, timeScale);
                 this.angle = lerpAngle(this.angle, this.targetAngle, turnRate);
 
-                // --- PC ONLY: Eye Movement Logic ---
                 if (gameState.highQuality) {
                     let desiredLookAngle = this.targetAngle - this.angle;
                     while (desiredLookAngle > Math.PI) desiredLookAngle -= Math.PI * 2;
@@ -366,7 +470,6 @@
                     const eyeRate = getLerpFactor(GAME_CONFIG.eyeFollowSpeed, timeScale);
                     this.lookAngle = lerpAngle(this.lookAngle, desiredLookAngle, eyeRate);
                     
-                    // Blink Logic
                     this.blinkTimer -= timeScale;
                     const blinkSpeed = 10; 
                     if (this.blinkState === 0) { 
@@ -429,7 +532,6 @@
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
 
-                // 1. Shadow (Restored for PC)
                 ctx.beginPath();
                 ctx.moveTo(this.path[0].x + 4, this.path[0].y + 6); 
                 for (let i = 1; i < this.path.length; i++) {
@@ -448,7 +550,6 @@
                     ctx.shadowColor = "transparent";
                 }
 
-                // 2. Glow when boosting (Restored for PC)
                 if (this.boosting) {
                     ctx.beginPath();
                     ctx.moveTo(this.path[0].x, this.path[0].y);
@@ -465,7 +566,6 @@
                     if (gameState.highQuality) ctx.shadowBlur = 0;
                 }
 
-                // 3. Main body
                 ctx.beginPath();
                 ctx.moveTo(this.path[0].x, this.path[0].y);
                 for (let i = 1; i < this.path.length; i++) {
@@ -475,14 +575,12 @@
                 ctx.lineWidth = this.radius * 2;
                 ctx.stroke();
 
-                // 4. Head
                 const headOffset = this.headSprite.width / 2;
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
                 ctx.drawImage(this.headSprite, -headOffset, -headOffset);
 
-                // --- EYES ---
                 if (gameState.highQuality) {
                     this.drawDynamicEyes(ctx);
                 } else {
@@ -588,7 +686,7 @@
             }
         }
 
-        // --- BACKGROUND ---
+        // --- BACKGROUND (OPTIMIZED) ---
         function drawBackground(ctx, camX, camY, timestamp) {
             const viewportW = gameState.width / gameState.gameZoom;
             const viewportH = gameState.height / gameState.gameZoom;
@@ -605,10 +703,9 @@
             const cols = Math.ceil(viewportW / xStep) + 2;
             const rows = Math.ceil(viewportH / yStep) + 2;
 
-            // Pre-calculate colors for Mobile
-            const colorCenterStatic = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.centerL}%)`;
-            const colorEdge = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.lightnessEdge}%)`;
             const drawR = Math.max(0, r - (BG_CONFIG.hexGap / 2));
+            const useCache = !gameState.highQuality && RenderCache.mobileHex;
+            const offsets = RenderCache.hexOffsets;
 
             for (let col = startCol; col < startCol + cols; col++) {
                 for (let row = startRow; row < startRow + rows; row++) {
@@ -616,32 +713,35 @@
                     let hexWorldY = row * yStep;
                     if (col % 2 !== 0) hexWorldY += yStep / 2;
 
-                    let colorCenter = colorCenterStatic;
-
-                    // --- PC ONLY: Animated Background ---
-                    if (gameState.highQuality) {
+                    if (useCache) {
+                        // High Performance Blitting for Mobile
+                        const size = RenderCache.mobileHex.width;
+                        ctx.drawImage(RenderCache.mobileHex, hexWorldX - size/2, hexWorldY - size/2);
+                    } else {
+                        // High Quality Animated for PC
                         const phase = Math.abs(getPseudoRandom(col, row) % (Math.PI * 2));
                         const sinVal = Math.sin(timestamp * BG_CONFIG.animSpeed + phase);
                         const normVal = (sinVal + 1) / 2;
                         const currentCenterL = BG_CONFIG.centerMinL + (BG_CONFIG.centerMaxL - BG_CONFIG.centerMinL) * normVal;
-                        colorCenter = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${currentCenterL}%)`;
-                    }
+                        const colorCenter = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${currentCenterL}%)`;
+                        const colorEdge = `hsl(${BG_CONFIG.hue}, ${BG_CONFIG.saturation}%, ${BG_CONFIG.lightnessEdge}%)`;
 
-                    ctx.beginPath();
-                    for (let i = 0; i < 6; i++) {
-                        const angle = (Math.PI / 180) * (60 * i);
-                        const px = hexWorldX + drawR * Math.cos(angle);
-                        const py = hexWorldY + drawR * Math.sin(angle);
-                        if (i === 0) ctx.moveTo(px, py);
-                        else ctx.lineTo(px, py);
-                    }
-                    ctx.closePath();
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            // Using pre-calculated offsets to avoid 6x trig calls per hex
+                            const px = hexWorldX + offsets[i].x;
+                            const py = hexWorldY + offsets[i].y;
+                            if (i === 0) ctx.moveTo(px, py);
+                            else ctx.lineTo(px, py);
+                        }
+                        ctx.closePath();
 
-                    const gradient = ctx.createRadialGradient(hexWorldX, hexWorldY, 0, hexWorldX, hexWorldY, drawR);
-                    gradient.addColorStop(0, colorCenter);
-                    gradient.addColorStop(1, colorEdge);
-                    ctx.fillStyle = gradient;
-                    ctx.fill();
+                        const gradient = ctx.createRadialGradient(hexWorldX, hexWorldY, 0, hexWorldX, hexWorldY, drawR);
+                        gradient.addColorStop(0, colorCenter);
+                        gradient.addColorStop(1, colorEdge);
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+                    }
                 }
             }
         }
@@ -667,6 +767,8 @@
                     gameState.highQuality = true;
                     this.initDesktop();
                     document.getElementById('desktop-hint').style.display = 'block';
+                    // Re-generate vignette for PC resolution immediately
+                    RenderCache.updateVignette(gameState.width, gameState.height);
                 } else if (mode === 'mobile') {
                     // DISABLE HIGH QUALITY (Optimized)
                     gameState.highQuality = false;
@@ -772,9 +874,15 @@
             const currentArea = gameState.width * gameState.height;
             gameState.gameZoom = Math.sqrt(currentArea / GAME_CONFIG.targetVisibleArea);
             gameState.gameZoom = Math.max(0.1, Math.min(20.0, gameState.gameZoom));
+
+            // Update cached vignette if screen resizes (Desktop only)
+            RenderCache.updateVignette(gameState.width, gameState.height);
         }
 
         function initGame() {
+            // Init Renderer Caches before anything else
+            RenderCache.init();
+            
             updateSize();
             gameState.player = new Snake();
             window.addEventListener('resize', updateSize);
@@ -844,27 +952,17 @@
             // --- INTERFACE LAYER ---
             ctx.resetTransform();
             
-            // 2. VIGNETTE (PC ONLY) - Возвращаем затемнение только для ПК
-            if (gameState.highQuality) {
-                const vRadius = Math.hypot(gameState.width/2, gameState.height/2); 
-                const vGrad = ctx.createRadialGradient(
-                    gameState.width / 2, gameState.height / 2, vRadius * 0.4, 
-                    gameState.width / 2, gameState.height / 2, vRadius
-                );
-                vGrad.addColorStop(0, 'rgba(0,0,0,0)');
-                vGrad.addColorStop(1, 'rgba(0,0,0,0.95)');
-                
-                ctx.fillStyle = vGrad;
-                ctx.fillRect(0, 0, gameState.width, gameState.height);
+            // 2. VIGNETTE (Cached Fill-Rate Optimization)
+            if (gameState.highQuality && RenderCache.vignette) {
+                ctx.drawImage(RenderCache.vignette, 0, 0);
             }
             
-            // 3. MINIMAP
+            // 3. MINIMAP (Cached Background Optimization)
             drawMinimap(ctx);
 
             requestAnimationFrame(gameLoop);
         }
         
-        // --- MINIMAP (Standardized) ---
         function drawMinimap(ctx) {
             const mRadius = MINIMAP_CONFIG.radius;
             const mMargin = MINIMAP_CONFIG.margin;
@@ -872,23 +970,20 @@
             const centerX = mMargin + mRadius;
             const centerY = mMargin + mRadius;
 
+            // Draw Cached Background
+            if (RenderCache.minimapBg) {
+                // Determine top-left corner of the minimap image
+                const drawX = centerX - (mRadius + mMargin);
+                const drawY = centerY - (mRadius + mMargin);
+                ctx.drawImage(RenderCache.minimapBg, drawX, drawY);
+            }
+
             ctx.save();
             ctx.resetTransform();
-
-            const grad = ctx.createRadialGradient(
-                centerX - mRadius * 0.3, centerY - mRadius * 0.3, mRadius * 0.1,
-                centerX, centerY, mRadius
-            );
-            grad.addColorStop(0, MINIMAP_CONFIG.bgCenter);
-            grad.addColorStop(1, MINIMAP_CONFIG.bgEdge);
-
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, mRadius, 0, Math.PI * 2);
-            ctx.clip(); 
-
-            ctx.fillStyle = grad;
-            ctx.fill(); 
-
+            
+            // Re-clip for player drawing (safety, though drawing inside the bg rect is usually fine)
+            // For optimization, we skip clipping if we trust the player bounds.
+            // But we need to calculate player position relative to minimap center.
             if (gameState.player) {
                 const normX = gameState.player.x / WORLD_RADIUS;
                 const normY = gameState.player.y / WORLD_RADIUS;
@@ -907,12 +1002,6 @@
                 ctx.arc(pX, pY, 3.5, 0, Math.PI*2);
                 ctx.fill();
             }
-
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, mRadius, 0, Math.PI * 2);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = MINIMAP_CONFIG.borderColor;
-            ctx.stroke();
             ctx.restore();
         }
 
