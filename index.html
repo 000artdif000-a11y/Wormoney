@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wormoney v2.0 - Modular Refactor</title>
+    <title>Wormoney</title>
+    <!-- Google Font for Game UI -->
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;400;600;800;900&display=swap" rel="stylesheet">
     <style>
         /* --- GLOBAL STYLES --- */
         body, html {
@@ -12,8 +14,8 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #000000;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #050508;
+            font-family: 'Exo 2', sans-serif;
             color: white;
             user-select: none;
             cursor: crosshair;
@@ -36,113 +38,440 @@
             z-index: 10;
         }
 
+        /* LEFT INFO PANEL */
         .ui-info {
-            bottom: 20px;
-            left: 20px;
-            opacity: 0.5;
+            bottom: 25px;
+            left: 25px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-left: 3px solid #445566;
+            backdrop-filter: blur(4px);
             font-size: 14px;
-            color: #888;
+            color: #ccc;
+            border-radius: 0 4px 4px 0;
+            text-shadow: 0 1px 2px black;
         }
 
-        .tutorial-hint {
-            top: 20%;
-            width: 40%;
-            text-align: center;
-            color: rgba(255,255,255,0.3);
-            font-size: 16px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        /* --- MENU & MODALS --- */
-        #main-menu-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 100;
-            display: flex;
-            background: rgba(10, 10, 15, 0.95);
-            backdrop-filter: blur(5px);
-            touch-action: none;
-            pointer-events: auto;
-        }
-
-        .menu-option {
-            flex: 1;
+        /* RIGHT STATS PANEL */
+        .ui-stats {
+            bottom: 25px;
+            right: 25px;
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.6);
+            border-right: 3px solid #445566;
+            backdrop-filter: blur(4px);
+            font-size: 12px;
+            color: #ccc;
+            border-radius: 4px 0 0 4px;
+            text-shadow: 0 1px 2px black;
+            text-align: right;
             display: flex;
             flex-direction: column;
+            gap: 2px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        
+        .stat-label {
+            font-weight: 700;
+            color: #778899;
+            text-transform: uppercase;
+            font-size: 10px;
+            align-self: center;
+        }
+
+        .stat-value {
+            font-weight: 400;
+            color: #fff;
+            min-width: 25px;
+        }
+
+        /* --- LEADERBOARD --- */
+        .ui-leaderboard {
+            top: 25px;
+            right: 25px;
+            width: 200px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            border-right: 3px solid #445566; 
+            border-radius: 4px 0 0 4px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .lb-header {
+            font-size: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #778899;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 5px;
+            text-align: right;
+            letter-spacing: 1px;
+        }
+
+        .lb-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .lb-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .lb-item.is-me {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: 700;
+            color: #fff;
+            border-right: 2px solid #fff;
+        }
+
+        .lb-rank { color: #667; width: 25px; font-weight: 700; text-align: left; }
+        .lb-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 10px; text-align: right; }
+        .lb-score { color: #ffd700; font-weight: 700; min-width: 40px; text-align: right; }
+
+        /* --- CASH OUT UI --- */
+        .ui-cashout-hint {
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-bottom: 3px solid #ffd700; 
+            backdrop-filter: blur(4px);
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            border-radius: 4px 4px 0 0;
+            text-shadow: 0 1px 2px black;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .ui-cashout-hint .key-badge {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        /* --- MOBILE CASH OUT BUTTON --- */
+        #mobile-cashout-btn {
+            position: absolute;
+            bottom: 100px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #2a2a30 0%, #111 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffd700;
+            display: none;
             justify-content: center;
             align-items: center;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            position: relative;
+            flex-direction: column;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 60;
+            pointer-events: auto;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            touch-action: none;
         }
 
-        .menu-option:first-child {
-            border-right: 1px solid rgba(255,255,255,0.1);
+        #mobile-cashout-btn:active {
+            transform: scale(0.95);
+            background: radial-gradient(circle, #333 0%, #000 100%);
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
         }
 
-        .menu-option:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
+        #mobile-cashout-btn span.icon { font-size: 24px; font-weight: 900; line-height: 1; margin-bottom: 2px; }
+        #mobile-cashout-btn span.label { font-size: 9px; font-weight: 700; text-transform: uppercase; opacity: 0.7; letter-spacing: 0.5px; }
 
-        .menu-option:active {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .icon-area { font-size: 60px; margin-bottom: 20px; }
-        .menu-title { font-size: 28px; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; }
-        .menu-desc { font-size: 14px; color: #aaa; max-width: 250px; text-align: center; line-height: 1.5; }
-
-        #or-divider {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #222;
-            padding: 10px;
-            border-radius: 50%;
-            z-index: 2;
-            color: #888;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        .tutorial-hint {
+            top: 25%; width: 300px; left: 50%; transform: translateX(-50%);
+            text-align: center; color: rgba(255,255,255,0.4); font-size: 14px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); pointer-events: none;
         }
 
         /* --- JOYSTICK --- */
         #joystick-ui {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; 
-            z-index: 50;
-            overflow: hidden;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; overflow: hidden;
         }
 
         #joystick-base {
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            transform: translate(-50%, -50%);
-            display: none; 
+            position: absolute; width: 100px; height: 100px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.05);
+            transform: translate(-50%, -50%); display: none; backdrop-filter: blur(2px);
         }
 
         #joystick-stick {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.8);
-            transform: translate(-50%, -50%);
+            position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #555, #222);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); transform: translate(-50%, -50%);
+        }
+
+
+        /* ========================================= */
+        /* --- MAIN MENU (3-Column Layout) --- */
+        /* ========================================= */
+        
+        #main-menu-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #050505;
+            touch-action: none;
+            pointer-events: auto;
+            opacity: 1;
+            transition: opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        #main-menu-overlay::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 90%);
+        }
+
+        #main-menu-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-card {
+            width: 95%;
+            max-width: 1100px; /* Wider for 3 columns */
+            height: 600px;
+            display: flex;
+            background: #0f0f12;
+            border: 1px solid #2a2a30;
+            border-radius: 8px;
+            box-shadow: 0 50px 100px rgba(0,0,0,1), inset 0 0 0 1px rgba(255,255,255,0.02);
+            overflow: hidden;
+            animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* --- COLUMN LAYOUT --- */
+        .menu-col {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        /* LEFT: Leaderboard */
+        .menu-left {
+            flex: 1;
+            background: #0c0c10;
+            border-right: 1px solid #2a2a30;
+            min-width: 250px;
+        }
+
+        /* CENTER: Skin, Title, Play */
+        .menu-center {
+            flex: 2;
+            background: #0f0f12;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-width: 320px;
+        }
+
+        /* RIGHT: Balance, Settings */
+        .menu-right {
+            flex: 1;
+            background: #0c0c10;
+            border-left: 1px solid #2a2a30;
+            min-width: 250px;
+        }
+
+
+        /* --- LEFT CONTENT (Leaderboard) --- */
+        .menu-lb-title {
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #556;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #2a2a30;
+            padding-bottom: 10px;
+        }
+
+        .menu-lb-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .glb-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #889;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+        }
+        .glb-name { color: #ccc; font-weight: 600; }
+        .glb-val { color: #ffd700; font-weight: 700; }
+
+
+        /* --- CENTER CONTENT --- */
+        .game-title {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .game-title h1 {
+            font-size: 32px;
+            font-weight: 900; 
+            color: #ffcc00; 
+            margin: 0;
+            letter-spacing: 4px;
+            text-shadow: 0 4px 10px rgba(255, 204, 0, 0.2);
+        }
+
+        .preview-container {
+            width: 100%;
+            height: 220px;
+            position: relative;
+            background: radial-gradient(circle at center, #1b1b22 0%, #0c0d12 100%);
+            border-radius: 8px;
+            border: 1px solid #2a2a30;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        #skin-preview {
+            width: 100%;
+            height: 100%;
+        }
+
+        .center-controls {
+            width: 100%;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* --- RIGHT CONTENT --- */
+        .balance-card {
+            background: #16161c;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #25252d;
+            text-align: center;
+        }
+        .balance-label { font-size: 11px; color: #667; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+        .balance-val { font-size: 28px; color: #fff; font-weight: 700; letter-spacing: 0.5px; }
+        .balance-val span { color: #888; font-size: 20px; margin-right: 2px; }
+        
+        .bank-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .bank-btn {
+            flex: 1;
+            background: #25252d; border: none; color: #ccc;
+            padding: 8px; border-radius: 4px;
+            cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .bank-btn:hover { background: #333340; color: #fff; }
+        .bank-btn.deposit { color: #44ff88; border: 1px solid rgba(68, 255, 136, 0.2); }
+        .bank-btn.withdraw { color: #ffaa44; border: 1px solid rgba(255, 170, 68, 0.2); }
+
+        .settings-header {
+            font-size: 12px; font-weight: 700; color: #556; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;
+        }
+
+
+        /* --- COMMON UI ELEMENTS --- */
+        .input-group { position: relative; }
+        .input-label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #556; margin-bottom: 8px; font-weight: 700; display: block;
+        }
+
+        #nickname-input {
+            width: 100%; background: #16161c; border: 1px solid #25252d; border-radius: 4px; padding: 14px 16px; color: #fff;
+            font-family: 'Exo 2', sans-serif; font-size: 16px; font-weight: 600; outline: none; transition: all 0.3s ease; box-sizing: border-box; text-align: center;
+        }
+        #nickname-input:focus { background: #1a1a22; border-color: #445566; }
+        #nickname-input::placeholder { color: #444; font-weight: 500; }
+
+        .color-picker { display: flex; justify-content: center; gap: 12px; padding: 2px 0; }
+        .color-swatch {
+            width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; box-shadow: 0 0 0 1px #333; transition: transform 0.2s, border-color 0.2s; position: relative;
+        }
+        .color-swatch:hover { transform: scale(1.1); }
+        .color-swatch.active { transform: scale(1.15); border-color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+
+        .lobby-selector {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; background: #16161c; padding: 4px; border-radius: 6px; border: 1px solid #25252d;
+        }
+        .lobby-btn {
+            background: transparent; border: none; color: #556; padding: 10px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: all 0.2s; font-family: 'Exo 2', sans-serif;
+        }
+        .lobby-btn:hover { color: #889; background: rgba(255,255,255,0.02); }
+        .lobby-btn.active { background: #25252d; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+
+        .pill-toggle {
+            display: flex; background: #16161c; border-radius: 6px; padding: 3px; border: 1px solid #25252d; margin-bottom: 15px;
+        }
+        .pill-btn {
+            flex: 1; background: transparent; border: none; color: #556; padding: 10px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: all 0.3s; font-family: 'Exo 2', sans-serif;
+        }
+        .pill-btn.active { background: #25252d; color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+
+        #btn-play {
+            width: 100%; margin-top: 10px; 
+            background: #ff3b3b;
+            border: none; padding: 18px; border-radius: 4px; 
+            color: #ffffff;
+            font-family: 'Exo 2', sans-serif; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+            cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(255, 59, 59, 0.3);
+        }
+        #btn-play:hover { background: #ff5252; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255, 59, 59, 0.4); }
+        #btn-play:active { transform: translateY(1px); }
+
+        @media (max-width: 900px) {
+            .menu-card { flex-direction: column; height: auto; max-height: 95vh; width: 95%; overflow-y: auto; }
+            .menu-left, .menu-right { order: 2; border: none; background: transparent; min-width: auto; padding: 15px; }
+            .menu-center { order: 1; min-width: auto; padding: 20px; }
+            .menu-col { gap: 15px; }
+            .preview-container { height: 180px; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -151,9 +480,40 @@
     <!-- GAME CANVAS -->
     <canvas id="game-canvas"></canvas>
 
-    <!-- UI LAYER: DESKTOP -->
+    <!-- UI LAYER: DESKTOP LEFT -->
     <div id="ui-desktop" class="ui-layer ui-info" style="display: none;">
-        LMB/RMB - Boost | Mouse - Move
+        <strong>CONTROLS:</strong> Mouse to Move &bull; Hold Click to Boost
+    </div>
+
+    <!-- UI LAYER: LEADERBOARD -->
+    <div id="ui-leaderboard" class="ui-layer ui-leaderboard">
+        <div class="lb-header">Leaderboard</div>
+        <ul class="lb-list" id="lb-list"></ul>
+    </div>
+
+    <!-- UI LAYER: STATS -->
+    <div id="ui-stats" class="ui-layer ui-stats">
+        <div class="stat-row">
+            <span class="stat-label">FPS</span>
+            <span class="stat-value" id="stat-fps">60</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">PING</span>
+            <span class="stat-value" id="stat-ping">24ms</span>
+        </div>
+    </div>
+
+    <!-- UI LAYER: CASH OUT -->
+    <div id="ui-cashout" class="ui-layer ui-cashout-hint" style="display: none;">
+        <span>Cash Out</span>
+        <span class="key-badge">Hold Q</span>
+        <span>3s</span>
+    </div>
+    
+    <!-- UI LAYER: MOBILE CASH OUT BUTTON -->
+    <div id="mobile-cashout-btn">
+        <span class="icon">$</span>
+        <span class="label">Cash Out</span>
     </div>
 
     <!-- UI LAYER: MOBILE / JOYSTICK -->
@@ -161,89 +521,108 @@
         <div id="joystick-base">
             <div id="joystick-stick"></div>
         </div>
-        <div class="ui-layer tutorial-hint" style="left: 5%; display: none;" id="hint-move">Touch & Hold<br>to Move</div>
-        <div class="ui-layer tutorial-hint" style="right: 5%; display: none;" id="hint-boost">Touch & Hold<br>to Boost</div>
+        <div class="ui-layer tutorial-hint" style="top: 80%; display: none;" id="mobile-hint">
+            <span style="display:inline-block; margin: 0 20px;">LEFT SIDE<br><span style="font-size:11px; color:#889; font-weight:400">TOUCH & DRAG TO STEER</span></span>
+            <span style="display:inline-block; margin: 0 20px;">RIGHT SIDE<br><span style="font-size:11px; color:#889; font-weight:400">HOLD TO BOOST</span></span>
+        </div>
     </div>
 
-    <!-- MAIN MENU (Input Selection) -->
+    <!-- MAIN MENU OVERLAY -->
     <div id="main-menu-overlay">
-        <div id="or-divider">OR</div>
-        
-        <!-- Option 1: Mobile -->
-        <div class="menu-option" id="btn-mode-mobile">
-            <div class="icon-area">📱</div>
-            <div class="menu-title">MOBILE</div>
-            <div class="menu-desc">
-                Fast & Optimized<br>
-                Static Background<br>
-                Joystick Controls
+        <div class="menu-card">
+            
+            <div class="menu-col menu-left">
+                <div class="menu-lb-title">Top Winners Today</div>
+                <div class="menu-lb-list">
+                    <div class="glb-row"><span class="glb-name">CryptoKing</span><span class="glb-val">+$4,290</span></div>
+                    <div class="glb-row"><span class="glb-name">Satoshi_Snake</span><span class="glb-val">+$1,850</span></div>
+                    <div class="glb-row"><span class="glb-name">ElonMusk_Real</span><span class="glb-val">+$920</span></div>
+                    <div class="glb-row"><span class="glb-name">Doge_To_Moon</span><span class="glb-val">+$550</span></div>
+                    <div class="glb-row"><span class="glb-name">Whale_Alert</span><span class="glb-val">+$300</span></div>
+                </div>
             </div>
-        </div>
 
-        <!-- Option 2: Desktop -->
-        <div class="menu-option" id="btn-mode-desktop">
-            <div class="icon-area">💻</div>
-            <div class="menu-title">DESKTOP</div>
-            <div class="menu-desc">
-                Full Visuals<br>
-                Animated Background<br>
-                Mouse Controls
+            <div class="menu-col menu-center">
+                <div class="game-title">
+                    <h1>WORMONEY</h1>
+                </div>
+                
+                <div class="preview-container">
+                    <canvas id="skin-preview"></canvas>
+                </div>
+
+                <div class="center-controls">
+                    <div class="input-group">
+                        <input type="text" id="nickname-input" placeholder="Enter Nickname" maxlength="12" autocomplete="off" spellcheck="false">
+                    </div>
+                    <div class="input-group">
+                        <div class="color-picker" id="color-picker"></div>
+                    </div>
+                    <div class="input-group">
+                        <div class="lobby-selector" id="lobby-selector">
+                            <button class="lobby-btn active" data-val="0">Free</button>
+                            <button class="lobby-btn" data-val="0.1">$0.1</button>
+                            <button class="lobby-btn" data-val="1">$1</button>
+                            <button class="lobby-btn" data-val="5">$5</button>
+                            <button class="lobby-btn" data-val="20">$20</button>
+                        </div>
+                    </div>
+                    <button id="btn-play">Join Lobby</button>
+                </div>
             </div>
+
+            <div class="menu-col menu-right">
+                <div class="balance-card">
+                    <span class="balance-label">Total Balance</span>
+                    <div class="balance-val"><span>$</span>124.50</div>
+                    <div class="bank-actions">
+                        <button class="bank-btn deposit">Deposit</button>
+                        <button class="bank-btn withdraw">Withdraw</button>
+                    </div>
+                </div>
+                <div class="settings-header">Settings</div>
+                <label class="input-label">Graphics</label>
+                <div class="pill-toggle" id="graphics-toggle">
+                    <button class="pill-btn" data-val="low">Low</button>
+                    <button class="pill-btn active" data-val="high">High</button>
+                </div>
+                <label class="input-label">Controls</label>
+                <div class="pill-toggle" id="device-toggle">
+                    <button class="pill-btn" data-val="mobile">Mobile</button>
+                    <button class="pill-btn active" data-val="desktop">PC</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        /**
-         * ==========================================
-         * MODULE 1: CONFIGURATION & CONSTANTS
-         * ==========================================
-         * Centralized settings for easy tweaking.
-         */
+        // CONFIG
         const Config = {
             Background: {
-                hexSize: 21.6,
-                hexGap: 9, 
-                hue: 215,
-                saturation: 9,
-                lightnessEdge: 2.5,
-                centerMinL: 4.2,
-                centerMaxL: 6.8,
-                animSpeed: 0.001,
-                centerL: 5.5, 
+                hexSize: 24, hexGap: 4, hue: 225, saturation: 15, lightnessBase: 4, lightnessPulse: 7, animSpeed: 0.001, cacheLevels: 20
             },
             Game: {
-                baseSpeed: 1.7,     
-                boostSpeed: 3.3,     
-                turnSpeed: 0.044, 
-                targetLengthPx: 82, 
-                snakeRadius: 9.2,
-                renderGap: 1,
-                eyeFollowSpeed: 0.15,
-                targetVisibleArea: 345000,
-                worldRadius: 1500
+                baseSpeed: 2.5, boostSpeed: 5.5, turnSpeed: 0.06, pathGap: 1.25, initialSnakeLength: 30, baseSnakeRadius: 11, eyeFollowSpeed: 0.18, targetVisibleArea: 400000, worldRadius: 1333 
+            },
+            Food: {
+                count: 400, glowStrength: 10, spawnInterval: 2000 
             },
             Minimap: {
-                radius: 75,
-                margin: 20,
-                bgCenter: 'rgba(20, 20, 30, 0.4)', 
-                bgEdge: 'rgba(10, 10, 20, 0.6)',
-                borderColor: 'rgba(52, 0, 90, 0.9)', 
-                playerColor: '#00d2ff'
+                radius: 80, margin: 25, bgCenter: 'rgba(15, 15, 25, 0.6)', bgEdge: 'rgba(5, 5, 10, 0.8)', borderColor: 'rgba(255, 255, 255, 0.1)', playerColor: '#fff'
             },
-            Colors: {
-                defaultSkin: '#1a52bd',
-                shadow: 'rgba(0, 0, 0, 0.4)',
-                boostGlow: 'rgba(255, 255, 255, 0.8)',
-                boundary: 'rgba(255, 50, 50, 0.6)'
-            }
+            Skins: [
+                { id: 'blue', primary: '#297afb', secondary: '#1c52b0', highlight: '#6eb6ff' },
+                { id: 'red', primary: '#ff4444', secondary: '#aa2222', highlight: '#ff8888' },
+                { id: 'green', primary: '#44ff44', secondary: '#22aa22', highlight: '#88ff88' },
+                { id: 'purple', primary: '#d044ff', secondary: '#8822aa', highlight: '#e088ff' },
+                { id: 'orange', primary: '#ffaa44', secondary: '#aa6622', highlight: '#ffcc88' },
+                { id: 'cyan', primary: '#44ffff', secondary: '#22aaaa', highlight: '#aaffff' },
+                { id: 'ruby', primary: '#e0115f', secondary: '#8a0b3c', highlight: '#ff5599' }
+            ]
         };
 
-        /**
-         * ==========================================
-         * MODULE 2: UTILITIES
-         * ==========================================
-         * Static helper functions.
-         */
+        // --- OPTIMIZATION 4: Math Optimizations ---
         class Utils {
             static lerpAngle(a, b, t) {
                 let diff = b - a;
@@ -251,450 +630,591 @@
                 while (diff < -Math.PI) diff += Math.PI * 2;
                 return a + diff * t;
             }
+            static getLerpFactor(baseRate, timeScale) { return 1 - Math.pow(1 - baseRate, timeScale); }
+            static getPseudoRandom(x, y) { return Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; }
+            static clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+            static distSq(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return dx*dx + dy*dy; }
+        }
 
-            static getLerpFactor(baseRate, timeScale) {
-                return 1 - Math.pow(1 - baseRate, timeScale);
+        // --- OPTIMIZATION 3: Object Pooling ---
+        class ObjectPool {
+            constructor(createFn, initialSize = 100) {
+                this.createFn = createFn;
+                this.pool = [];
+                for (let i = 0; i < initialSize; i++) this.pool.push(this.createFn());
             }
+            get() { return this.pool.length > 0 ? this.pool.pop() : this.createFn(); }
+            release(obj) { this.pool.push(obj); }
+        }
 
-            static getPseudoRandom(x, y) {
-                return Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+        // --- OPTIMIZATION 1: Spatial Hash Grid ---
+        class SpatialGrid {
+            constructor(cellSize) {
+                this.cellSize = cellSize;
+                this.cells = new Map();
             }
-
-            static clamp(val, min, max) {
-                return Math.max(min, Math.min(max, val));
+            _getKey(x, y) { return Math.floor(x / this.cellSize) + "," + Math.floor(y / this.cellSize); }
+            insert(item) {
+                const key = this._getKey(item.x, item.y);
+                if (!this.cells.has(key)) this.cells.set(key, []);
+                this.cells.get(key).push(item);
+                item._spatialKey = key;
+            }
+            remove(item) {
+                const key = item._spatialKey;
+                if (!key || !this.cells.has(key)) return;
+                const list = this.cells.get(key);
+                const idx = list.indexOf(item);
+                if (idx !== -1) {
+                    const last = list[list.length - 1];
+                    list[idx] = last;
+                    list.pop();
+                    if (list.length === 0) this.cells.delete(key);
+                }
+                item._spatialKey = null;
+            }
+            updateItem(item) {
+                const newKey = this._getKey(item.x, item.y);
+                if (newKey !== item._spatialKey) {
+                    this.remove(item);
+                    this.insert(item);
+                }
+            }
+            // Generator for rendering optimization
+            *queryGenerator(rect) {
+                const startX = Math.floor(rect.x / this.cellSize);
+                const endX = Math.floor((rect.x + rect.w) / this.cellSize);
+                const startY = Math.floor(rect.y / this.cellSize);
+                const endY = Math.floor((rect.y + rect.h) / this.cellSize);
+                for (let x = startX; x <= endX; x++) {
+                    for (let y = startY; y <= endY; y++) {
+                        const cell = this.cells.get(x + "," + y);
+                        if (cell) for (let i = 0; i < cell.length; i++) yield cell[i];
+                    }
+                }
             }
         }
 
-        /**
-         * ==========================================
-         * MODULE 3: SYSTEM MANAGERS
-         * ==========================================
-         */
-
-        /**
-         * NETWORK MANAGER (Placeholder)
-         * Future: Handle WebSockets, state synchronization for multiplayer.
-         */
-        class NetworkManager {
-            constructor() {
-                this.isConnected = false;
-                this.socket = null;
+        // --- OPTIMIZATION 3: Snake Path Buffer (Zero-Alloc Circular Buffer) ---
+        class SnakePath {
+            constructor(initialCapacity = 1000) {
+                this.capacity = initialCapacity;
+                this.data = new Float32Array(this.capacity * 2);
+                this.head = 0;
+                this.length = 0;
             }
-            connect(serverUrl) { console.log(`Connecting to ${serverUrl}...`); }
-            sendInput(inputData) { /* Emit input state to server */ }
-            onGameStateUpdate(callback) { /* Listen for server tick */ }
+            addHead(x, y) {
+                this.head = (this.head - 2 + this.data.length) % this.data.length;
+                this.data[this.head] = x;
+                this.data[this.head + 1] = y;
+                this.length++;
+                if (this.length * 2 >= this.data.length) this.resize();
+            }
+            removeTail() { if (this.length > 0) this.length--; }
+            getX(i) { return this.data[(this.head + i * 2) % this.data.length]; }
+            getY(i) { return this.data[(this.head + i * 2 + 1) % this.data.length]; }
+            resize() {
+                const newCapacity = this.capacity * 2;
+                const newData = new Float32Array(newCapacity * 2);
+                for (let i = 0; i < this.length; i++) {
+                    const oldIdx = (this.head + i * 2) % this.data.length;
+                    newData[i * 2] = this.data[oldIdx];
+                    newData[i * 2 + 1] = this.data[oldIdx + 1];
+                }
+                this.data = newData;
+                this.capacity = newCapacity;
+                this.head = 0;
+            }
         }
 
-        /**
-         * SKIN MANAGER (Placeholder)
-         * Future: Handle skin selection, loading assets, customization.
-         */
-        class SkinManager {
-            constructor() {
-                this.currentSkin = Config.Colors.defaultSkin;
+        // SNAKE PREVIEW (Kept largely original logic for menu, but fixed ctx issues)
+        class SnakePreview {
+            constructor(canvas, initialSkin) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.skin = initialSkin;
+                this.baseRadius = Config.Game.baseSnakeRadius;
+                this.baseWaveAmp = 10;
+                this.baseXOffset = 20; 
+                this.baseGap = Config.Game.pathGap;
+                this.isBoosting = false;
+                this.time = 0;
+                this.running = true;
+                this.blinkTimer = Math.random() * 200 + 100; 
+                this.blinkState = 0; 
+                this.eyeOpenness = 1.0;
+                this.scale = 1;
+                this.width = canvas.width || 300;
+                this.height = canvas.height || 150;
+                window.addEventListener('resize', () => this.handleResize());
+                this.handleResize();
+                this.animate();
             }
-            setSkin(skinId) { this.currentSkin = skinId; }
-            getSkin() { return this.currentSkin; }
+            stop() { this.running = false; }
+            start() { if (!this.running) { this.running = true; this.animate(); } }
+            setSkin(skin) { this.skin = skin; this.updateSprites(); }
+            setBoost(boosting) { this.isBoosting = boosting; }
+            handleResize() {
+                if(this.canvas.offsetParent === null) return;
+                const rect = this.canvas.getBoundingClientRect();
+                this.width = rect.width;
+                this.height = rect.height;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+                const minDim = Math.min(this.width, this.height);
+                let scale = minDim / 140; 
+                this.scale = Utils.clamp(scale, 0.5, 4.0);
+                this.radius = this.baseRadius * this.scale;
+                this.waveAmp = this.baseWaveAmp * this.scale;
+                this.xOffset = this.baseXOffset * this.scale;
+                this.gap = this.baseGap * this.scale;
+                const currentBaseSpeed = this.isBoosting ? Config.Game.boostSpeed : Config.Game.baseSpeed;
+                this.speed = currentBaseSpeed * this.scale;
+                this.updateSprites();
+            }
+            updateSprites() {
+                if (!this.radius) return;
+                const r = this.radius;
+                const sH = Math.ceil(r * 2.4); 
+                const cH = document.createElement('canvas'); cH.width = sH; cH.height = sH; 
+                const ctxH = cH.getContext('2d'); const cxH = sH/2;
+                const gradH = ctxH.createRadialGradient(cxH-r*0.3, cxH-r*0.3, 0, cxH, cxH, r);
+                gradH.addColorStop(0, this.skin.highlight); gradH.addColorStop(0.4, this.skin.primary); gradH.addColorStop(1, this.skin.secondary);
+                ctxH.fillStyle = gradH; ctxH.beginPath(); ctxH.arc(cxH, cxH, r, 0, Math.PI*2); ctxH.fill();
+                this.headSprite = cH;
+                const sB = Math.ceil(r * 2.2); 
+                const cB = document.createElement('canvas'); cB.width = sB; cB.height = sB; 
+                const ctxB = cB.getContext('2d'); const cxB = sB/2;
+                const gradB = ctxB.createRadialGradient(cxB-r*0.3, cxB-r*0.3, 0, cxB, cxB, r);
+                gradB.addColorStop(0, this.skin.highlight); gradB.addColorStop(0.3, this.skin.primary); gradB.addColorStop(1, this.skin.secondary);
+                ctxB.fillStyle = gradB; ctxB.beginPath(); ctxB.arc(cxB, cxB, r, 0, Math.PI*2); ctxB.fill();
+                ctxB.fillStyle = 'rgba(255,255,255,0.15)'; ctxB.beginPath(); ctxB.ellipse(cxB-r*0.2, cxB-r*0.3, r*0.4, r*0.25, Math.PI/4, 0, Math.PI*2); ctxB.fill();
+                this.bodySprite = cB;
+            }
+            animate() {
+                if(!this.running) return;
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.animate());
+            }
+            update() {
+                const targetSpeed = (this.isBoosting ? Config.Game.boostSpeed : Config.Game.baseSpeed) * this.scale;
+                this.speed = targetSpeed;
+                this.time += this.speed * 0.6;
+                this.blinkTimer -= 1; const blinkSpeed = 8;
+                if (this.blinkState === 0) { this.eyeOpenness = 1.0; if (this.blinkTimer <= 0) { this.blinkState = 1; this.blinkTimer = blinkSpeed; } }
+                else if (this.blinkState === 1) { if (this.blinkTimer <= 0) { this.blinkState = 2; this.blinkTimer = blinkSpeed; this.eyeOpenness = 0.0; } else this.eyeOpenness = this.blinkTimer / blinkSpeed; }
+                else if (this.blinkState === 2) { if (this.blinkTimer <= 0) { this.blinkState = 0; this.blinkTimer = Math.random() * 200 + 150; this.eyeOpenness = 1.0; } else this.eyeOpenness = 1.0 - (this.blinkTimer / blinkSpeed); }
+            }
+            draw() {
+                if (!this.bodySprite || !this.headSprite) return;
+                const ctx = this.ctx; // Fix previously requested
+                ctx.clearRect(0, 0, this.width, this.height);
+                const centerX = this.width / 2; const centerY = this.height / 2;
+                const length = Config.Game.initialSnakeLength;
+                const gap = this.gap;
+                for (let i = length; i >= 4; i -= 4) {
+                    const dist = i * gap;
+                    const x = centerX + this.xOffset - dist;
+                    const waveFreq = 0.05 / this.scale; 
+                    const y = centerY + Math.sin((this.time - dist) * waveFreq) * this.waveAmp;
+                    if (x < -this.bodySprite.width) continue;
+                    ctx.drawImage(this.bodySprite, x - this.bodySprite.width/2, y - this.bodySprite.height/2);
+                }
+                const headX = centerX + this.xOffset;
+                const waveFreq = 0.05 / this.scale;
+                const y = centerY + Math.sin(this.time * waveFreq) * this.waveAmp;
+                const slope = this.waveAmp * waveFreq * Math.cos(this.time * waveFreq);
+                ctx.save();
+                ctx.translate(headX, y);
+                ctx.rotate(Math.atan(slope));
+                ctx.drawImage(this.headSprite, -this.headSprite.width/2, -this.headSprite.height/2);
+                const eyeX = (this.radius * 0.4); const eyeY = (this.radius * 0.55); const eyeRadius = (this.radius * 0.45);
+                const drawEye = (side) => {
+                    const yOffset = side === 'left' ? -eyeY : eyeY;
+                    ctx.save(); ctx.translate(eyeX, yOffset);
+                    const blinkScale = this.eyeOpenness;
+                    if (blinkScale < 0.1) { ctx.beginPath(); ctx.moveTo(-eyeRadius, 0); ctx.lineTo(eyeRadius, 0); ctx.lineWidth = 2 * this.scale; ctx.strokeStyle = "#222"; ctx.stroke(); ctx.restore(); return; }
+                    ctx.scale(1, blinkScale); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, eyeRadius, 0, Math.PI*2); ctx.fill();
+                    const pupilSize = eyeRadius * 0.55; const pDx = eyeRadius * 0.3; ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(pDx, 0, pupilSize, 0, Math.PI*2); ctx.fill();
+                    if (this.eyeOpenness > 0.4) { ctx.fillStyle = "rgba(255,255,255,0.9)"; ctx.beginPath(); ctx.arc(pDx - pupilSize*0.3, -pupilSize*0.3, pupilSize*0.25, 0, Math.PI*2); ctx.fill(); }
+                    ctx.restore();
+                };
+                drawEye('left'); drawEye('right');
+                ctx.restore();
+            }
         }
 
-        /**
-         * INPUT MANAGER
-         * Handles Mouse (Desktop) and Touch/Joystick (Mobile) logic.
-         * Decouples raw events from game state.
-         */
+        class FoodManager {
+            constructor(worldRadius) {
+                this.worldRadius = worldRadius;
+                this.grid = new SpatialGrid(250); // Spatial Partitioning
+                this.movingFoods = [];
+                this.lastSpawnTime = 0;
+                this.pool = new ObjectPool(() => ({ x:0, y:0, value:1, color:'#fff', size:4, vx:0, vy:0, id:0 }), 500);
+            }
+            spawnBatch(count) { for (let i = 0; i < count; i++) this._spawnOne(); }
+            _spawnOne() {
+                const f = this.pool.get();
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.sqrt(Math.random()) * (this.worldRadius - 50);
+                const rand = Math.random();
+                let value = 1; let color = '#ff5555'; let size = 4;
+                if (rand > 0.995) { value = 5; color = '#ffd700'; size = 7; } 
+                else if (rand > 0.97) { value = 3; color = '#ff55ff'; size = 6; }
+                else if (rand > 0.90) { value = 2; color = '#55ffff'; size = 5; }
+                else { value = 1; color = '#55ff55'; size = 4; }
+                f.x = Math.cos(angle) * dist; f.y = Math.sin(angle) * dist;
+                f.value = value; f.color = color; f.size = size; f.id = Math.random();
+                if (value === 5) { f.vx = (Math.random()-0.5)*1.5; f.vy = (Math.random()-0.5)*1.5; this.movingFoods.push(f); } 
+                else { f.vx = 0; f.vy = 0; }
+                this.grid.insert(f);
+            }
+            update(player, timestamp) {
+                if (!this.lastSpawnTime) this.lastSpawnTime = timestamp;
+                if (timestamp - this.lastSpawnTime > Config.Food.spawnInterval) { this._spawnOne(); this.lastSpawnTime = timestamp; }
+                
+                // Update Moving Foods
+                for (let i = this.movingFoods.length - 1; i >= 0; i--) {
+                    const f = this.movingFoods[i];
+                    f.x += f.vx; f.y += f.vy;
+                    if (Utils.distSq(f.x, f.y, 0, 0) > (this.worldRadius - 50)**2) { 
+                        const a = Math.atan2(f.y, f.x); f.vx = -Math.cos(a)*Math.abs(f.vx); f.vy = -Math.sin(a)*Math.abs(f.vy); 
+                    }
+                    if (Math.random() < 0.02) { f.vx = (Math.random()-0.5)*1.5; f.vy = (Math.random()-0.5)*1.5; }
+                    this.grid.updateItem(f);
+                }
+
+                // Collision Detection using Spatial Grid (Collision optimization)
+                const checkDist = player.radius * 4;
+                const queryRect = { x: player.x - checkDist, y: player.y - checkDist, w: checkDist*2, h: checkDist*2 };
+                const eatDistSq = (player.radius * 1.5) ** 2;
+                const magnetDistSq = (player.radius * 4) ** 2;
+
+                const toRemove = [];
+                for (const f of this.grid.queryGenerator(queryRect)) {
+                    const dx = player.x - f.x; const dy = player.y - f.y;
+                    const dSq = dx*dx + dy*dy;
+                    if (dSq < eatDistSq) { 
+                        player.addScore(f.value); 
+                        toRemove.push(f);
+                    } else if (dSq < magnetDistSq) {
+                        const dist = Math.sqrt(dSq);
+                        f.x += (dx/dist)*2.5; f.y += (dy/dist)*2.5; // Optimized magnet strength
+                        this.grid.updateItem(f);
+                    }
+                }
+                
+                for (const f of toRemove) {
+                    this.grid.remove(f);
+                    if (f.value === 5) {
+                        const idx = this.movingFoods.indexOf(f);
+                        if (idx !== -1) { this.movingFoods[idx] = this.movingFoods[this.movingFoods.length-1]; this.movingFoods.pop(); }
+                    }
+                    this.pool.release(f);
+                }
+            }
+            draw(ctx, camX, camY, viewW, viewH) {
+                // Rendering optimization: Only draw visible cells
+                const buffer = 50; 
+                ctx.shadowBlur = Config.Food.glowStrength;
+                const viewRect = { x: camX - buffer, y: camY - buffer, w: viewW + buffer*2, h: viewH + buffer*2 };
+                for (const f of this.grid.queryGenerator(viewRect)) {
+                    ctx.fillStyle = f.color; ctx.shadowColor = f.color; ctx.beginPath(); ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class LeaderboardManager {
+            constructor() { this.listElement = document.getElementById('lb-list'); }
+            update(timestamp, playerScore, playerName) {
+                const topList = [{ name: playerName || "YOU", score: Math.floor(playerScore), isMe: true }];
+                this.listElement.innerHTML = '';
+                topList.forEach((p, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'lb-item' + (p.isMe ? ' is-me' : '');
+                    li.innerHTML = `<span class="lb-rank">#${index + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score}</span>`;
+                    this.listElement.appendChild(li);
+                });
+            }
+        }
+
         class InputManager {
             constructor(canvas) {
                 this.canvas = canvas;
-                this.state = {
-                    mode: 'desktop', // 'desktop' | 'mobile'
-                    mouseX: window.innerWidth / 2,
-                    mouseY: window.innerHeight / 2,
-                    mouseDown: false,
-                    activePointerId: null
-                };
-
-                // Joystick specific internal state
-                this.joystick = {
-                    active: false,
-                    origin: { x: 0, y: 0 },
-                    current: { x: 0, y: 0 },
-                    radius: 40,
-                    id: null
-                };
-
-                // DOM Elements for Joystick
-                this.ui = {
-                    base: document.getElementById('joystick-base'),
-                    stick: document.getElementById('joystick-stick'),
-                    hintMove: document.getElementById('hint-move'),
-                    hintBoost: document.getElementById('hint-boost')
-                };
-
+                this.state = { mode: 'desktop', mouseX: window.innerWidth/2, mouseY: window.innerHeight/2, mouseDown: false, qKey: false };
+                this.qKeyLocked = false;
+                this.joystick = { active: false, origin: {x:0,y:0}, current: {x:0,y:0}, radius: 50, id: null };
+                this.ui = { base: document.getElementById('joystick-base'), stick: document.getElementById('joystick-stick'), mobileHint: document.getElementById('mobile-hint'), mobileCashOutBtn: document.getElementById('mobile-cashout-btn') };
                 this.boostPointers = new Set();
+                this._initBindings();
             }
-
+            _initBindings() {
+                this._boundDesktopMove = (e) => { this.state.mouseX = e.clientX; this.state.mouseY = e.clientY; };
+                this._boundDesktopDown = () => this.state.mouseDown = true;
+                this._boundDesktopUp = () => this.state.mouseDown = false;
+                this._boundKeyDown = (e) => { if (e.code === 'KeyQ' && !this.qKeyLocked) this.state.qKey = true; };
+                this._boundKeyUp = (e) => { if (e.code === 'KeyQ') { this.state.qKey = false; this.qKeyLocked = false; }};
+                this._boundPointerDown = this._handlePointerDown.bind(this);
+                this._boundPointerMove = this._handlePointerMove.bind(this);
+                this._boundPointerUp = this._handlePointerUp.bind(this);
+            }
             setMode(mode) {
+                this.cleanup(); 
                 this.state.mode = mode;
-                if (mode === 'desktop') this._initDesktop();
-                else this._initMobile();
+                if (mode === 'desktop') this._initDesktop(); else this._initMobile();
             }
-
+            cleanup() {
+                window.removeEventListener('mousemove', this._boundDesktopMove);
+                window.removeEventListener('mousedown', this._boundDesktopDown);
+                window.removeEventListener('mouseup', this._boundDesktopUp);
+                window.removeEventListener('keydown', this._boundKeyDown);
+                window.removeEventListener('keyup', this._boundKeyUp);
+                window.removeEventListener('pointerdown', this._boundPointerDown);
+                window.removeEventListener('pointermove', this._boundPointerMove);
+                window.removeEventListener('pointerup', this._boundPointerUp);
+                window.removeEventListener('pointercancel', this._boundPointerUp);
+            }
             _initDesktop() {
-                window.addEventListener('mousemove', e => {
-                    this.state.mouseX = e.clientX;
-                    this.state.mouseY = e.clientY;
-                });
-                window.addEventListener('mousedown', () => this.state.mouseDown = true);
-                window.addEventListener('mouseup', () => this.state.mouseDown = false);
+                window.addEventListener('mousemove', this._boundDesktopMove);
+                window.addEventListener('mousedown', this._boundDesktopDown);
+                window.addEventListener('mouseup', this._boundDesktopUp);
+                window.addEventListener('keydown', this._boundKeyDown);
+                window.addEventListener('keyup', this._boundKeyUp);
             }
-
+            lockQ() { this.state.qKey = false; this.qKeyLocked = true; }
             _initMobile() {
-                // Pointer events for multitouch support
-                window.addEventListener('pointerdown', this._handlePointerDown.bind(this), { passive: false });
-                window.addEventListener('pointermove', this._handlePointerMove.bind(this), { passive: false });
-                window.addEventListener('pointerup', this._handlePointerUp.bind(this), { passive: false });
-                window.addEventListener('pointercancel', this._handlePointerUp.bind(this), { passive: false });
+                this.ui.mobileHint.style.display = 'block';
+                this.ui.mobileCashOutBtn.style.display = 'flex';
+                window.addEventListener('pointerdown', this._boundPointerDown, { passive: false });
+                window.addEventListener('pointermove', this._boundPointerMove, { passive: false });
+                window.addEventListener('pointerup', this._boundPointerUp, { passive: false });
+                window.addEventListener('pointercancel', this._boundPointerUp, { passive: false });
                 window.addEventListener('contextmenu', e => e.preventDefault());
-            }
-
-            _handlePointerDown(e) {
-                e.preventDefault();
-                const { clientX: x, clientY: y, pointerId } = e;
-
-                // Capture pointer to canvas to track movement outside bounds
-                try { this.canvas.setPointerCapture(pointerId); } catch (err) {}
-
-                // Left side of screen = Joystick
-                if (x < window.innerWidth / 2) {
-                    if (this.joystick.active) {
-                        this.joystick.active = false;
-                        this.ui.base.style.display = 'none';
-                    }
-                    this.joystick.active = true;
-                    this.joystick.id = pointerId;
-                    this.joystick.origin = { x, y };
-                    this.joystick.current = { x, y };
-
-                    // Visual update
-                    this.ui.base.style.display = 'block';
-                    this.ui.base.style.left = x + 'px';
-                    this.ui.base.style.top = y + 'px';
-                    this.ui.stick.style.transform = `translate(-50%, -50%)`;
-                    if(this.ui.hintMove) this.ui.hintMove.style.display = 'none';
-                } 
-                // Right side of screen = Boost
-                else {
-                    this.boostPointers.add(pointerId);
-                    this.state.mouseDown = true;
-                    if(this.ui.hintBoost) this.ui.hintBoost.style.display = 'none';
+                if (!this.ui.mobileCashOutBtn.hasAttribute('data-init')) {
+                    const handleCashOutStart = (e) => { e.preventDefault(); e.stopPropagation(); if (!this.qKeyLocked) this.state.qKey = true; };
+                    const handleCashOutEnd = (e) => { e.preventDefault(); e.stopPropagation(); this.state.qKey = false; this.qKeyLocked = false; };
+                    this.ui.mobileCashOutBtn.addEventListener('pointerdown', handleCashOutStart);
+                    this.ui.mobileCashOutBtn.addEventListener('pointerup', handleCashOutEnd);
+                    this.ui.mobileCashOutBtn.addEventListener('pointercancel', handleCashOutEnd);
+                    this.ui.mobileCashOutBtn.addEventListener('touchstart', handleCashOutStart, {passive: false});
+                    this.ui.mobileCashOutBtn.addEventListener('touchend', handleCashOutEnd, {passive: false});
+                    this.ui.mobileCashOutBtn.setAttribute('data-init', 'true');
                 }
             }
-
+            _handlePointerDown(e) {
+                if (e.target.closest('#main-menu-overlay') || e.target.closest('#mobile-cashout-btn')) return;
+                e.preventDefault();
+                const { clientX: x, clientY: y, pointerId } = e;
+                try { this.canvas.setPointerCapture(pointerId); } catch (err) {}
+                if (x < window.innerWidth / 2) {
+                    if (this.joystick.active) { this.joystick.active = false; this.ui.base.style.display = 'none'; }
+                    this.joystick.active = true; this.joystick.id = pointerId; this.joystick.origin = { x, y }; this.joystick.current = { x, y };
+                    this.ui.base.style.display = 'block'; this.ui.base.style.left = x + 'px'; this.ui.base.style.top = y + 'px';
+                    this.ui.stick.style.transform = `translate(-50%, -50%)`;
+                    if(this.ui.mobileHint) this.ui.mobileHint.style.opacity = '0';
+                } else {
+                    this.boostPointers.add(pointerId); this.state.mouseDown = true;
+                    if(this.ui.mobileHint) this.ui.mobileHint.style.opacity = '0';
+                }
+            }
             _handlePointerMove(e) {
+                if (!this.joystick.active && this.boostPointers.size === 0) return;
                 e.preventDefault();
                 if (this.joystick.active && e.pointerId === this.joystick.id) {
-                    const dx = e.clientX - this.joystick.origin.x;
-                    const dy = e.clientY - this.joystick.origin.y;
-                    const angle = Math.atan2(dy, dx);
-                    const dist = Math.min(Math.hypot(dx, dy), this.joystick.radius);
-                    
-                    // Update stick visual
-                    const stickX = Math.cos(angle) * dist;
-                    const stickY = Math.sin(angle) * dist;
+                    const dx = e.clientX - this.joystick.origin.x; const dy = e.clientY - this.joystick.origin.y;
+                    const angle = Math.atan2(dy, dx); const dist = Math.min(Math.hypot(dx, dy), this.joystick.radius);
+                    const stickX = Math.cos(angle) * dist; const stickY = Math.sin(angle) * dist;
                     this.ui.stick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
-
-                    // Project virtual mouse position for snake steering
-                    const projectionDist = 500;
+                    const projectionDist = 300;
                     this.state.mouseX = (window.innerWidth / 2) + Math.cos(angle) * projectionDist;
                     this.state.mouseY = (window.innerHeight / 2) + Math.sin(angle) * projectionDist;
                 }
             }
-
             _handlePointerUp(e) {
+                if (e.target.closest('#main-menu-overlay')) return;
                 e.preventDefault();
-                if (this.joystick.active && e.pointerId === this.joystick.id) {
-                    this.joystick.active = false;
-                    this.joystick.id = null;
-                    this.ui.base.style.display = 'none';
-                }
-                if (this.boostPointers.has(e.pointerId)) {
-                    this.boostPointers.delete(e.pointerId);
-                    if (this.boostPointers.size === 0) this.state.mouseDown = false;
-                }
+                if (this.joystick.active && e.pointerId === this.joystick.id) { this.joystick.active = false; this.joystick.id = null; this.ui.base.style.display = 'none'; }
+                if (this.boostPointers.has(e.pointerId)) { this.boostPointers.delete(e.pointerId); if (this.boostPointers.size === 0) this.state.mouseDown = false; }
                 try { this.canvas.releasePointerCapture(e.pointerId); } catch(err){}
             }
-
-            getInputState() {
-                return this.state;
-            }
+            getInputState() { return this.state; }
         }
 
-        /**
-         * RENDER ENGINE
-         * Handles Canvas Context, Caching, and Drawing primitives.
-         */
         class RenderEngine {
             constructor(canvas) {
-                this.canvas = canvas;
-                this.ctx = canvas.getContext('2d', { alpha: false });
-                this.width = canvas.width;
-                this.height = canvas.height;
-                
-                // Settings
-                this.highQuality = false;
-
-                // Cache storage
-                this.cache = {
-                    mobileHex: null,
-                    minimapBg: null,
-                    vignette: null,
-                    hexOffsets: []
-                };
-
-                this._initGeometryCache();
+                this.canvas = canvas; this.ctx = canvas.getContext('2d', { alpha: false });
+                this.width = canvas.width; this.height = canvas.height; this.highQuality = false;
+                this.assets = { hexFrames: [], minimapBg: null, vignette: null, shadowSprite: null };
+                this._initGeometryCache(); this._initShadowCache();
             }
-
-            resize(w, h) {
-                this.width = w;
-                this.height = h;
-                this.canvas.width = w;
-                this.canvas.height = h;
-                // Re-generate dependent caches
-                if (this.highQuality) this.updateVignetteCache();
-            }
-
-            setQuality(isHigh) {
-                this.highQuality = isHigh;
-                // Generate/Clear caches based on quality
-                this._initHexCache();
-                this._initMinimapCache();
-                this.updateVignetteCache();
-            }
-
-            clear() {
-                this.ctx.resetTransform();
-                this.ctx.clearRect(0, 0, this.width, this.height);
-            }
-
-            // --- Caching Logic ---
-
+            resize(w, h) { this.width = w; this.height = h; this.canvas.width = w; this.canvas.height = h; if (this.highQuality) this.updateVignetteCache(); }
+            setQuality(isHigh) { this.highQuality = isHigh; this._initHexCache(); this._initMinimapCache(); this.updateVignetteCache(); }
+            clear() { this.ctx.resetTransform(); this.ctx.clearRect(0, 0, this.width, this.height); }
             _initGeometryCache() {
-                const r = Config.Background.hexSize;
-                const drawR = Math.max(0, r - (Config.Background.hexGap / 2));
-                for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI / 180) * (60 * i);
-                    this.cache.hexOffsets.push({
-                        x: drawR * Math.cos(angle),
-                        y: drawR * Math.sin(angle)
-                    });
-                }
+                const r = Config.Background.hexSize; const drawR = Math.max(0, r - (Config.Background.hexGap / 2));
+                this.hexOffsets = []; for (let i = 0; i < 6; i++) { const angle = (Math.PI / 180) * (60 * i); this.hexOffsets.push({ x: drawR * Math.cos(angle), y: drawR * Math.sin(angle) }); }
             }
-
             _initHexCache() {
-                const r = Config.Background.hexSize;
-                const drawR = Math.max(0, r - (Config.Background.hexGap / 2));
-                const size = Math.ceil(drawR * 2 + 2);
-                
-                const c = document.createElement('canvas');
-                c.width = size;
-                c.height = size;
-                const ctx = c.getContext('2d');
-                const cx = size/2, cy = size/2;
-
-                const colorCenter = `hsl(${Config.Background.hue}, ${Config.Background.saturation}%, ${Config.Background.centerL}%)`;
-                const colorEdge = `hsl(${Config.Background.hue}, ${Config.Background.saturation}%, ${Config.Background.lightnessEdge}%)`;
-
-                ctx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                     const angle = (Math.PI / 180) * (60 * i);
-                     const px = cx + drawR * Math.cos(angle);
-                     const py = cy + drawR * Math.sin(angle);
-                     if (i===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                this.assets.hexFrames = []; const levels = Config.Background.cacheLevels;
+                const r = Config.Background.hexSize; const drawR = Math.max(0, r - (Config.Background.hexGap / 2));
+                const size = Math.ceil(drawR * 2 + 2); const cx = size/2, cy = size/2;
+                for (let i = 0; i < levels; i++) {
+                    const c = document.createElement('canvas'); c.width = size; c.height = size; const ctx = c.getContext('2d');
+                    const t = i / (levels - 1); 
+                    const l = Config.Background.lightnessBase + (Config.Background.lightnessPulse - Config.Background.lightnessBase) * t;
+                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, drawR);
+                    grad.addColorStop(0, `hsl(${Config.Background.hue}, ${Config.Background.saturation}%, ${l}%)`);
+                    grad.addColorStop(0.8, `hsl(${Config.Background.hue}, ${Config.Background.saturation}%, ${Math.max(0, l-2)}%)`);
+                    grad.addColorStop(1, `hsl(${Config.Background.hue}, ${Config.Background.saturation}%, 0%)`);
+                    ctx.fillStyle = grad; ctx.beginPath();
+                    for (let j = 0; j < 6; j++) { const px = cx + this.hexOffsets[j].x; const py = cy + this.hexOffsets[j].y; if (j===0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+                    ctx.closePath(); ctx.fill(); this.assets.hexFrames.push(c);
                 }
-                ctx.closePath();
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, drawR);
-                grad.addColorStop(0, colorCenter);
-                grad.addColorStop(1, colorEdge);
-                ctx.fillStyle = grad;
-                ctx.fill();
-
-                this.cache.mobileHex = c;
             }
-
+            _initShadowCache() {
+                const r = Config.Game.baseSnakeRadius; 
+                const size = r * 4.5; 
+                const c = document.createElement('canvas'); c.width = size; c.height = size; 
+                const ctx = c.getContext('2d');
+                const grad = ctx.createRadialGradient(size/2, size/2, r * 0.2, size/2, size/2, r * 2.0);
+                grad.addColorStop(0, 'rgba(0,0,0,0.4)'); grad.addColorStop(0.5, 'rgba(0,0,0,0.15)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = grad; ctx.fillRect(0,0,size,size); 
+                this.assets.shadowSprite = c;
+            }
             _initMinimapCache() {
-                const { radius, margin, bgCenter, bgEdge, borderColor } = Config.Minimap;
-                const size = (radius + margin) * 2;
-                const c = document.createElement('canvas');
-                c.width = size;
-                c.height = size;
-                const ctx = c.getContext('2d');
+                const { radius, margin, bgCenter, bgEdge, borderColor } = Config.Minimap; const size = (radius + margin) * 2;
+                const c = document.createElement('canvas'); c.width = size; c.height = size; const ctx = c.getContext('2d');
                 const cx = size/2, cy = size/2;
-
                 const grad = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, radius * 0.1, cx, cy, radius);
-                grad.addColorStop(0, bgCenter);
-                grad.addColorStop(1, bgEdge);
-
-                ctx.beginPath();
-                ctx.arc(cx, cy, radius, 0, Math.PI*2);
-                ctx.clip();
-                ctx.fillStyle = grad;
-                ctx.fill();
-
-                // Border
-                ctx.beginPath();
-                ctx.arc(cx, cy, radius, 0, Math.PI*2);
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = borderColor;
-                ctx.stroke();
-
-                this.cache.minimapBg = c;
+                grad.addColorStop(0, bgCenter); grad.addColorStop(1, bgEdge);
+                ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.fillStyle = grad; ctx.fill();
+                ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.lineWidth = 1; ctx.strokeStyle = borderColor; ctx.stroke();
+                this.assets.minimapBg = c;
             }
-
             updateVignetteCache() {
-                if (!this.highQuality) {
-                    this.cache.vignette = null;
-                    return;
-                }
-                const c = document.createElement('canvas');
-                c.width = this.width;
-                c.height = this.height;
-                const ctx = c.getContext('2d');
+                if (!this.highQuality) { this.assets.vignette = null; return; }
+                const c = document.createElement('canvas'); c.width = this.width; c.height = this.height; const ctx = c.getContext('2d');
                 const vRadius = Math.hypot(this.width/2, this.height/2);
-                const grad = ctx.createRadialGradient(this.width/2, this.height/2, vRadius*0.4, this.width/2, this.height/2, vRadius);
-                grad.addColorStop(0, 'rgba(0,0,0,0)');
-                grad.addColorStop(1, 'rgba(0,0,0,0.95)');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, this.width, this.height);
-                this.cache.vignette = c;
+                const grad = ctx.createRadialGradient(this.width/2, this.height/2, vRadius*0.5, this.width/2, this.height/2, vRadius);
+                grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(0,0,0,0.7)');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, this.width, this.height); this.assets.vignette = c;
             }
         }
 
-        /**
-         * ==========================================
-         * MODULE 4: ENTITIES
-         * ==========================================
-         */
-
-        /**
-         * ENTITY BASE
-         * Base class for all game objects.
-         */
-        class Entity {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.markedForDeletion = false;
-            }
-            update(dt) {}
-            draw(ctx) {}
-        }
-
-        /**
-         * SNAKE CLASS
-         * Handles physics, body segments, and rendering of the snake.
-         */
-        class Snake extends Entity {
-            constructor() {
-                super(0, 0);
-                this.reset();
-                this.skinColor = Config.Colors.defaultSkin;
-                this.headSprite = this._createHeadSprite(this.skinColor);
-            }
-
-            reset() {
-                this.x = 0;
-                this.y = 0;
-                this.angle = -Math.PI / 2;
-                this.targetAngle = this.angle;
-                this.lookAngle = 0;
-                this.radius = Config.Game.snakeRadius;
-                this.boosting = false;
-                this.dashOffset = 0;
+        class Snake {
+            constructor(rendererAssets, inputManager, skinData, nickname, onDeathCallback) {
+                this.assets = rendererAssets;
+                this.inputManager = inputManager;
+                this.onDeathCallback = onDeathCallback;
+                this.nickname = nickname || "Worm";
+                this.skinColor = skinData ? skinData.primary : Config.Skins[0].primary; 
+                this.skinSecondary = skinData ? skinData.secondary : Config.Skins[0].secondary;
+                this.skinHighlight = skinData ? skinData.highlight : Config.Skins[0].highlight;
                 
-                // Path/Body Init
-                this.path = [];
-                for(let i=0; i < 50; i++) {
-                    this.path.push({x: this.x, y: this.y + (i * 2)});
-                }
-
-                // Eye State
-                this.blinkTimer = Math.random() * 200 + 100;
-                this.blinkState = 0; 
-                this.eyeOpenness = 1.0;
+                this.baseHeadSprite = this._createHeadSprite(Config.Game.baseSnakeRadius);
+                this.baseBodySprite = this._createBodySprite(Config.Game.baseSnakeRadius);
+                
+                // Using new Circular Buffer Path
+                this.path = new SnakePath(2000); 
+                this.reset(false);
             }
 
-            _createHeadSprite(color) {
-                const r = this.radius;
-                const size = r * 2 + 4;
-                const c = document.createElement('canvas');
-                c.width = size; c.height = size;
-                const ctx = c.getContext('2d');
-                const center = size / 2;
+            reset(isDeath = false) {
+                this.x = 0; this.y = 0; this.angle = -Math.PI / 2; this.targetAngle = this.angle; this.lookAngle = 0;
+                this.radius = Config.Game.baseSnakeRadius;
+                this.boosting = false;
+                if (isDeath && this.inputManager) this.inputManager.lockQ();
+                this.cashOutTimer = 0; this.isCashingOut = false;
+                this.score = 0;
+                this.targetLength = Config.Game.initialSnakeLength;
+                
+                // Reset Path
+                this.path = new SnakePath(2000);
+                const initLen = this.targetLength; const gap = Config.Game.pathGap;
+                // Pre-fill path backwards
+                for(let i=0; i < initLen; i++) { this.path.addHead(this.x, this.y + (i * gap)); }
+                
+                this.blinkTimer = Math.random() * 200 + 100; this.blinkState = 0; this.eyeOpenness = 1.0;
+            }
 
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.arc(center, center, r, 0, Math.PI*2);
-                ctx.fill();
+            addScore(amount) { this.score += amount; if (this.score < 0) this.score = 0; this.updateSize(); }
+            updateSize() {
+                this.targetLength = Config.Game.initialSnakeLength + Math.floor(this.score / 5);
+                const widthGrowthFactor = 0.28; 
+                const targetR = Config.Game.baseSnakeRadius + Math.min(20, Math.sqrt(this.score) * widthGrowthFactor); 
+                this.radius = this.radius * 0.9 + targetR * 0.1; 
+            }
 
-                const grad = ctx.createRadialGradient(center - r*0.3, center - r*0.3, 0, center, center, r);
-                grad.addColorStop(0, 'rgba(255,255,255,0.25)');
-                grad.addColorStop(1, 'rgba(255,255,255,0)');
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(center, center, r, 0, Math.PI*2);
-                ctx.fill();
+            _createBodySprite(r) {
+                const size = Math.ceil(r * 2.2); const c = document.createElement('canvas'); c.width = size; c.height = size; const ctx = c.getContext('2d'); const cx = size/2;
+                const grad = ctx.createRadialGradient(cx - r*0.3, cx - r*0.3, 0, cx, cx, r);
+                grad.addColorStop(0, this.skinHighlight); grad.addColorStop(0.3, this.skinColor); grad.addColorStop(1, this.skinSecondary);
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cx, r, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.beginPath(); ctx.ellipse(cx - r*0.2, cx - r*0.3, r*0.4, r*0.25, Math.PI/4, 0, Math.PI*2); ctx.fill();
+                return c;
+            }
+
+            _createHeadSprite(r) {
+                const size = Math.ceil(r * 2.4); const c = document.createElement('canvas'); c.width = size; c.height = size; const ctx = c.getContext('2d'); const cx = size/2;
+                const grad = ctx.createRadialGradient(cx - r*0.3, cx - r*0.3, 0, cx, cx, r);
+                grad.addColorStop(0, this.skinHighlight); grad.addColorStop(0.4, this.skinColor); grad.addColorStop(1, this.skinSecondary);
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cx, r, 0, Math.PI*2); ctx.fill();
                 return c;
             }
 
             update(timeScale, inputState, worldRadius, isHighQuality) {
-                // 1. INPUT PROCESSING
-                const dx = inputState.mouseX - (window.innerWidth / 2);
-                const dy = inputState.mouseY - (window.innerHeight / 2);
-                this.targetAngle = Math.atan2(dy, dx);
-                this.boosting = inputState.mouseDown;
-
-                // 2. TURN PHYSICS
-                const turnRate = Utils.getLerpFactor(Config.Game.turnSpeed, timeScale);
-                this.angle = Utils.lerpAngle(this.angle, this.targetAngle, turnRate);
-
-                // 3. EYE MECHANICS (High Quality Only)
-                if (isHighQuality) {
-                    this._updateEyes(timeScale);
+                if (inputState.qKey) {
+                    this.isCashingOut = true; this.boosting = false;
+                    this.cashOutTimer += (timeScale * 16.667); 
+                    if (this.cashOutTimer >= 3000) { 
+                        if(this.onDeathCallback) this.onDeathCallback(); else this.reset(true); return; 
+                    }
+                } else {
+                    this.isCashingOut = false; this.cashOutTimer = 0;
+                    this.boosting = inputState.mouseDown && this.score > 0;
                 }
 
-                // 4. MOVEMENT
+                if (this.boosting) {
+                    const reduction = 0.1667 * timeScale;
+                    this.score -= reduction; if (this.score < 0) { this.score = 0; this.boosting = false; }
+                    this.updateSize();
+                }
+
+                const dx = inputState.mouseX - (window.innerWidth / 2); const dy = inputState.mouseY - (window.innerHeight / 2);
+                if (!this.isCashingOut) this.targetAngle = Math.atan2(dy, dx);
+                const turnRate = Utils.getLerpFactor(Config.Game.turnSpeed, timeScale);
+                if (!this.isCashingOut) this.angle = Utils.lerpAngle(this.angle, this.targetAngle, turnRate);
+                
+                this._updateEyes(timeScale);
+
                 let currentSpeed = this.boosting ? Config.Game.boostSpeed : Config.Game.baseSpeed;
                 currentSpeed *= timeScale;
-                this.dashOffset -= currentSpeed * 1.5;
-
                 let nextX = this.x + Math.cos(this.angle) * currentSpeed;
                 let nextY = this.y + Math.sin(this.angle) * currentSpeed;
-
-                // 5. BOUNDARY CHECK
                 const limit = worldRadius - this.radius;
-                if (nextX * nextX + nextY * nextY > limit * limit) {
-                    this.reset();
-                    return;
+                
+                if (nextX * nextX + nextY * nextY > limit * limit) { 
+                    if(this.onDeathCallback) this.onDeathCallback(); else this.reset(true); return; 
                 }
+                
+                this.x = nextX; this.y = nextY;
 
-                this.x = nextX;
-                this.y = nextY;
-
-                // 6. BODY SEGMENTS LOGIC
-                this.path.unshift({x: this.x, y: this.y});
-                let accumulatedLen = 0;
-                for (let i = 0; i < this.path.length - 1; i++) {
-                    const p1 = this.path[i];
-                    const p2 = this.path[i+1];
-                    const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-                    if (accumulatedLen + dist > Config.Game.targetLengthPx) {
-                        const ratio = (Config.Game.targetLengthPx - accumulatedLen) / dist;
-                        p2.x = p1.x + (p2.x - p1.x) * ratio;
-                        p2.y = p1.y + (p2.y - p1.y) * ratio;
-                        this.path.length = i + 2;
-                        break;
+                // Path Logic with Zero-Allocation Buffer
+                if (this.path.length === 0) this.path.addHead(this.x, this.y);
+                const headX = this.path.getX(0); const headY = this.path.getY(0);
+                const distDx = this.x - headX; const distDy = this.y - headY;
+                const dist = Math.hypot(distDx, distDy);
+                const gap = Config.Game.pathGap;
+                
+                if (dist >= gap) {
+                    const count = Math.floor(dist / gap);
+                    const stepX = (distDx / dist) * gap; const stepY = (distDy / dist) * gap;
+                    for (let i = 1; i <= count; i++) { 
+                        this.path.addHead(headX + stepX * i, headY + stepY * i); 
                     }
-                    accumulatedLen += dist;
+                    while (this.path.length > this.targetLength) { this.path.removeTail(); }
                 }
             }
 
@@ -703,391 +1223,333 @@
                 while (desiredLookAngle > Math.PI) desiredLookAngle -= Math.PI * 2;
                 while (desiredLookAngle < -Math.PI) desiredLookAngle += Math.PI * 2;
                 desiredLookAngle = Utils.clamp(desiredLookAngle, -Math.PI/2.2, Math.PI/2.2);
-
                 const eyeRate = Utils.getLerpFactor(Config.Game.eyeFollowSpeed, timeScale);
                 this.lookAngle = Utils.lerpAngle(this.lookAngle, desiredLookAngle, eyeRate);
-
-                // Blinking Logic
-                this.blinkTimer -= timeScale;
-                const blinkSpeed = 10;
-
-                if (this.blinkState === 0) { // State 0: Normal Open
-                    this.eyeOpenness = 1.0;
-                    if (this.blinkTimer <= 0) { 
-                        this.blinkState = 1; 
-                        this.blinkTimer = blinkSpeed; 
-                    }
-                } 
-                else if (this.blinkState === 1) { // State 1: Closing
-                    if (this.blinkTimer <= 0) { 
-                        this.blinkState = 2; 
-                        this.blinkTimer = blinkSpeed;
-                        this.eyeOpenness = 0.0;
-                    } else {
-                        this.eyeOpenness = this.blinkTimer / blinkSpeed;
-                    }
-                } 
-                else if (this.blinkState === 2) { // State 2: Opening
-                    if (this.blinkTimer <= 0) { 
-                        this.blinkState = 0; 
-                        this.blinkTimer = Math.random() * 200 + 150; 
-                        this.eyeOpenness = 1.0;
-                    } else {
-                        this.eyeOpenness = 1.0 - (this.blinkTimer / blinkSpeed);
-                    }
-                }
-                
-                // Final Safety Clamp to prevent rendering glitches
-                this.eyeOpenness = Utils.clamp(this.eyeOpenness, 0, 1);
+                this.blinkTimer -= timeScale; const blinkSpeed = 8;
+                if (this.blinkState === 0) { this.eyeOpenness = 1.0; if (this.blinkTimer <= 0) { this.blinkState = 1; this.blinkTimer = blinkSpeed; } }
+                else if (this.blinkState === 1) { if (this.blinkTimer <= 0) { this.blinkState = 2; this.blinkTimer = blinkSpeed; this.eyeOpenness = 0.0; } else this.eyeOpenness = this.blinkTimer / blinkSpeed; }
+                else if (this.blinkState === 2) { if (this.blinkTimer <= 0) { this.blinkState = 0; this.blinkTimer = Math.random() * 200 + 150; this.eyeOpenness = 1.0; } else this.eyeOpenness = 1.0 - (this.blinkTimer / blinkSpeed); }
             }
 
-            draw(ctx, isHighQuality) {
+            draw(ctx, isHighQuality, timestamp, viewBounds) {
                 if (this.path.length < 2) return;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
+                const renderStride = 4;
+                const scale = this.radius / Config.Game.baseSnakeRadius;
+                const sSize = (this.assets.shadowSprite ? this.assets.shadowSprite.width : this.radius * 4.5) * scale;
+                const buffer = sSize / 2 + 10;
+                // Culling bounds
+                const left = viewBounds.x - buffer; const right = viewBounds.x + viewBounds.w + buffer;
+                const top = viewBounds.y - buffer; const bottom = viewBounds.y + viewBounds.h + buffer;
 
-                // Shadow
-                ctx.beginPath();
-                ctx.moveTo(this.path[0].x + 4, this.path[0].y + 6);
-                for (let i = 1; i < this.path.length; i++) ctx.lineTo(this.path[i].x + 4, this.path[i].y + 6);
-                ctx.strokeStyle = Config.Colors.shadow;
-                ctx.lineWidth = this.radius * 2;
-                if (isHighQuality) { ctx.shadowBlur = 15; ctx.shadowColor = "rgba(0,0,0,0.6)"; }
-                ctx.stroke();
-                if (isHighQuality) { ctx.shadowBlur = 0; ctx.shadowColor = "transparent"; }
-
-                // Body Construction
-                ctx.beginPath();
-                ctx.moveTo(this.path[0].x, this.path[0].y);
-                for (let i = 1; i < this.path.length; i++) ctx.lineTo(this.path[i].x, this.path[i].y);
-
-                // Boost Glow
-                if (this.boosting) {
-                    ctx.save();
-                    ctx.strokeStyle = Config.Colors.boostGlow;
-                    ctx.lineWidth = (this.radius * 2 + 6) * 0.9;
-                    if (isHighQuality) { ctx.shadowBlur = 15; ctx.shadowColor = "white"; }
-                    ctx.stroke();
-                    ctx.restore();
+                // Optimization: Iterate backwards using buffer accessor
+                if (this.assets.shadowSprite) {
+                    for (let i = this.path.length - 1; i >= 0; i-=renderStride) {
+                        const px = this.path.getX(i); const py = this.path.getY(i);
+                        if (px < left || px > right || py < top || py > bottom) continue;
+                        ctx.drawImage(this.assets.shadowSprite, px - sSize/2, py - sSize/2 + 2 * scale, sSize, sSize);
+                    }
                 }
 
-                // Main Body Color
-                ctx.strokeStyle = this.skinColor;
-                ctx.lineWidth = this.radius * 2;
-                ctx.stroke();
+                if (this.boosting) {
+                    ctx.save(); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.strokeStyle = "#FFFFFF"; 
+                    ctx.lineWidth = this.radius * 2.35; ctx.shadowBlur = 8; ctx.shadowColor = "rgba(255, 255, 255, 0.15)";
+                    ctx.beginPath();
+                    // Draw boosting path line
+                    if (this.path.length > 0) { 
+                        ctx.moveTo(this.path.getX(0), this.path.getY(0)); 
+                        for (let i = renderStride; i < this.path.length; i+=renderStride) { 
+                            ctx.lineTo(this.path.getX(i), this.path.getY(i)); 
+                        } 
+                    }
+                    ctx.stroke(); ctx.restore();
+                }
 
-                // Head
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
-                ctx.drawImage(this.headSprite, -this.headSprite.width/2, -this.headSprite.height/2);
+                const bSize = this.baseBodySprite.width * scale;
+                for (let i = this.path.length - 1; i >= 0; i-=renderStride) {
+                    const px = this.path.getX(i); const py = this.path.getY(i);
+                    if (px < left || px > right || py < top || py > bottom) continue;
+                    ctx.drawImage(this.baseBodySprite, px - bSize/2, py - bSize/2, bSize, bSize);
+                }
+
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+                const hSize = this.baseHeadSprite.width * scale;
+                ctx.drawImage(this.baseHeadSprite, -hSize/2, -hSize/2, hSize, hSize);
                 
-                // Eyes
-                this._drawEyes(ctx, isHighQuality);
-                ctx.restore();
-            }
+                const eyeX = (Config.Game.baseSnakeRadius * 0.4) * scale;
+                const eyeYBase = (Config.Game.baseSnakeRadius * 0.55) * scale;
+                const eyeRadius = (Config.Game.baseSnakeRadius * 0.45) * scale;
+                const blinkScale = this.eyeOpenness;
 
-            _drawEyes(ctx, isHighQuality) {
-                const drawSide = (side) => {
-                    const eyeX = this.radius * 0.4;
-                    const eyeY = (side === 'left' ? -1 : 1) * (this.radius * 0.55);
-                    const eyeRadius = this.radius * 0.42;
-
-                    ctx.save();
-                    ctx.translate(eyeX, eyeY);
-
-                    // Simplified Eyes for Low Quality
-                    if (!isHighQuality) {
-                         ctx.fillStyle = '#f0f0f0';
-                         ctx.beginPath(); ctx.arc(0, 0, eyeRadius, 0, Math.PI*2); ctx.fill();
-                         ctx.fillStyle = "#111"; 
-                         ctx.beginPath(); ctx.arc(eyeRadius*0.2, 0, eyeRadius*0.6, 0, Math.PI*2); ctx.fill();
-                         ctx.fillStyle = "rgba(255,255,255,0.9)";
-                         ctx.beginPath(); ctx.arc(eyeRadius*0.2 - eyeRadius*0.18, -eyeRadius*0.18, eyeRadius*0.15, 0, Math.PI*2); ctx.fill();
-                         ctx.restore();
-                         return;
-                    }
-
-                    // Dynamic Eyes for High Quality
-                    const blinkScale = this.eyeOpenness;
-                    
-                    // Closed Eye line
-                    if (blinkScale < 0.1) {
-                        ctx.beginPath(); ctx.moveTo(-eyeRadius, 0); ctx.lineTo(eyeRadius, 0);
-                        ctx.lineWidth = 1.5; ctx.strokeStyle = "#333"; ctx.stroke();
-                        ctx.restore(); return;
-                    }
-
-                    ctx.scale(1, blinkScale);
-                    const scleraGrad = ctx.createRadialGradient(-2, -2, 1, 0, 0, eyeRadius);
-                    scleraGrad.addColorStop(0, '#ffffff'); scleraGrad.addColorStop(1, '#e6e6e6');
-                    ctx.fillStyle = scleraGrad;
-                    ctx.beginPath(); ctx.arc(0, 0, eyeRadius, 0, Math.PI*2); ctx.fill();
-                    ctx.strokeStyle = "rgba(0,0,0,0.15)"; ctx.lineWidth = 0.5; ctx.stroke();
-
-                    const pupilSize = eyeRadius * 0.55;
-                    const pupilRange = eyeRadius * (0.3 + (0.15 * (Math.abs(this.lookAngle)/(Math.PI/2.2))));
-                    const pDx = Math.cos(this.lookAngle) * pupilRange;
-                    const pDy = Math.sin(this.lookAngle) * pupilRange;
-
-                    ctx.fillStyle = "#111"; 
-                    ctx.beginPath(); ctx.arc(pDx, pDy, pupilSize, 0, Math.PI*2); ctx.fill();
-
-                    if (this.eyeOpenness > 0.4) {
-                        ctx.fillStyle = "rgba(255,255,255,0.9)";
-                        ctx.beginPath(); ctx.arc(pDx - pupilSize*0.3, pDy - pupilSize*0.3, pupilSize*0.25, 0, Math.PI*2); ctx.fill();
-                    }
+                const drawEye = (side) => {
+                    const yOffset = side === 'left' ? -eyeYBase : eyeYBase;
+                    ctx.save(); ctx.translate(eyeX, yOffset);
+                    if (blinkScale < 0.1) { ctx.beginPath(); ctx.moveTo(-eyeRadius, 0); ctx.lineTo(eyeRadius, 0); ctx.lineWidth = 2 * scale; ctx.strokeStyle = "#222"; ctx.stroke(); ctx.restore(); return; }
+                    ctx.scale(1, blinkScale); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, eyeRadius, 0, Math.PI*2); ctx.fill();
+                    const pupilSize = eyeRadius * 0.55; 
+                    const pDx = Math.cos(this.lookAngle) * (eyeRadius * 0.3); const pDy = Math.sin(this.lookAngle) * (eyeRadius * 0.3);
+                    ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(pDx, pDy, pupilSize, 0, Math.PI*2); ctx.fill();
+                    if (isHighQuality && this.eyeOpenness > 0.4) { ctx.fillStyle = "rgba(255,255,255,0.9)"; ctx.beginPath(); ctx.arc(pDx - pupilSize*0.3, pDy - pupilSize*0.3, pupilSize*0.25, 0, Math.PI*2); ctx.fill(); }
                     ctx.restore();
                 };
-                drawSide('left');
-                drawSide('right');
+                drawEye('left'); drawEye('right');
+                
+                ctx.restore();
+
+                ctx.save();
+                ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                ctx.font = `bold ${Math.max(12, 12 * scale)}px "Exo 2"`;
+                ctx.textAlign = "center";
+                ctx.shadowColor = "rgba(0,0,0,0.8)";
+                ctx.shadowBlur = 4;
+                ctx.fillText(this.nickname, this.x, this.y - (this.radius * 2.5));
+                ctx.restore();
+
+                if (this.isCashingOut && this.cashOutTimer > 0) this._drawCashOutIndicator(ctx);
+            }
+
+            _drawCashOutIndicator(ctx) {
+                const progress = Math.min(1, this.cashOutTimer / 3000);
+                const r = this.radius * 1.8;
+                ctx.save(); ctx.translate(this.x, this.y);
+                ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.strokeStyle = "rgba(255, 255, 255, 0.25)"; ctx.lineWidth = 4; ctx.stroke();
+                if (progress > 0) {
+                    ctx.beginPath(); ctx.arc(0, 0, r, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * progress));
+                    ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.stroke();
+                }
+                ctx.restore();
             }
         }
 
-        /**
-         * ==========================================
-         * MODULE 5: CORE ENGINE
-         * ==========================================
-         * Ties all modules together: Init, Loop, Render logic.
-         */
         class GameEngine {
             constructor() {
                 this.canvas = document.getElementById('game-canvas');
                 this.renderer = new RenderEngine(this.canvas);
                 this.input = new InputManager(this.canvas);
-                this.player = new Snake();
+                this.foodManager = new FoodManager(Config.Game.worldRadius);
+                this.leaderboard = new LeaderboardManager();
                 
-                // System State
                 this.isRunning = false;
                 this.lastTime = 0;
                 this.gameZoom = 1;
                 this.camera = { x: 0, y: 0 };
                 this.worldRadius = Config.Game.worldRadius;
-                
-                this.initUI();
+                this.uiStats = { fps: document.getElementById('stat-fps'), ping: document.getElementById('stat-ping') };
+                this.frameCount = 0; this.lastFpsTime = 0;
+
+                this.initMenu();
             }
 
-            initUI() {
-                // Setup Menu Buttons
-                const btnMobile = document.getElementById('btn-mode-mobile');
-                const btnDesktop = document.getElementById('btn-mode-desktop');
+            initMenu() {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
                 const menu = document.getElementById('main-menu-overlay');
-
-                const startGame = (mode) => {
-                    menu.style.display = 'none';
-                    this.input.setMode(mode);
-                    this.renderer.setQuality(mode === 'desktop');
-                    
-                    if(mode === 'desktop') document.getElementById('ui-desktop').style.display = 'block';
-                    else {
-                        document.getElementById('hint-move').style.display = 'block';
-                        document.getElementById('hint-boost').style.display = 'block';
-                    }
-
-                    this.start();
+                const btnPlay = document.getElementById('btn-play');
+                const colorContainer = document.getElementById('color-picker');
+                const lobbyContainer = document.getElementById('lobby-selector');
+                const nameInput = document.getElementById('nickname-input');
+                const previewCanvas = document.getElementById('skin-preview');
+                
+                let settings = {
+                    colorId: Config.Skins[0].id,
+                    graphics: 'high',
+                    mode: isMobile ? 'mobile' : 'desktop',
+                    lobby: '0'
                 };
 
-                btnMobile.onclick = () => startGame('mobile');
-                btnDesktop.onclick = () => startGame('desktop');
-                
-                window.addEventListener('resize', () => this.handleResize());
-                this.handleResize(); // Initial sizing
+                this.preview = new SnakePreview(previewCanvas, Config.Skins[0]);
+
+                colorContainer.innerHTML = '';
+                Config.Skins.forEach(skin => {
+                    const swatch = document.createElement('div');
+                    swatch.className = 'color-swatch' + (skin.id === settings.colorId ? ' active' : '');
+                    swatch.style.background = `linear-gradient(135deg, ${skin.primary}, ${skin.secondary})`;
+                    swatch.onclick = () => {
+                        settings.colorId = skin.id;
+                        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                        swatch.classList.add('active');
+                        this.preview.setSkin(skin);
+                    };
+                    colorContainer.appendChild(swatch);
+                });
+
+                const lobbyButtons = lobbyContainer.querySelectorAll('.lobby-btn');
+                lobbyButtons.forEach(btn => {
+                    btn.onclick = () => {
+                        lobbyButtons.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        settings.lobby = btn.dataset.val;
+                    }
+                });
+
+                const setupToggle = (id, key) => {
+                    const container = document.getElementById(id);
+                    const buttons = container.querySelectorAll('button');
+                    buttons.forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.val === settings[key]) btn.classList.add('active');
+                        const newBtn = btn.cloneNode(true);
+                        btn.parentNode.replaceChild(newBtn, btn);
+                        newBtn.onclick = () => {
+                            settings[key] = newBtn.dataset.val;
+                            container.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                            newBtn.classList.add('active');
+                        };
+                    });
+                };
+
+                setupToggle('graphics-toggle', 'graphics');
+                setupToggle('device-toggle', 'mode');
+
+                const newBtnPlay = btnPlay.cloneNode(true);
+                btnPlay.parentNode.replaceChild(newBtnPlay, btnPlay);
+
+                newBtnPlay.onclick = () => {
+                    const name = nameInput.value.trim().substring(0, 12) || "Guest";
+                    const skinData = Config.Skins.find(s => s.id === settings.colorId);
+                    this.input.setMode(settings.mode);
+                    this.renderer.setQuality(settings.graphics === 'high');
+                    if(this.preview) this.preview.stop();
+                    this.player = new Snake(this.renderer.assets, this.input, skinData, name, () => {
+                        this.showMenu();
+                    });
+                    if(settings.mode === 'desktop') { 
+                        document.getElementById('ui-desktop').style.display = 'block'; 
+                        document.getElementById('ui-cashout').style.display = 'flex'; 
+                    }
+                    menu.classList.add('hidden');
+                    setTimeout(() => {
+                        menu.style.display = 'none';
+                        menu.classList.remove('hidden');
+                    }, 400);
+                    this.start();
+                };
+            }
+
+            showMenu() {
+                const menu = document.getElementById('main-menu-overlay');
+                document.getElementById('ui-desktop').style.display = 'none';
+                document.getElementById('ui-cashout').style.display = 'none';
+                this.input.ui.mobileCashOutBtn.style.display = 'none';
+                this.input.ui.mobileHint.style.display = 'none';
+                if(this.preview) this.preview.start();
+                menu.style.display = 'flex';
+                void menu.offsetWidth;
+                menu.style.opacity = '1';
+                this.isRunning = false;
+                this.player = null; 
             }
 
             handleResize() {
-                const w = window.innerWidth;
-                const h = window.innerHeight;
-                this.renderer.resize(w, h);
-                
-                // Calculate zoom to keep consistent view area
-                const currentArea = w * h;
-                this.gameZoom = Math.sqrt(currentArea / Config.Game.targetVisibleArea);
-                this.gameZoom = Utils.clamp(this.gameZoom, 0.1, 20.0);
+                const w = window.innerWidth; const h = window.innerHeight; this.renderer.resize(w, h);
+                const currentArea = w * h; this.gameZoom = Math.sqrt(currentArea / Config.Game.targetVisibleArea);
+                this.gameZoom = Utils.clamp(this.gameZoom, 0.4, 1.5);
             }
-
-            start() {
-                if(this.isRunning) return;
-                this.isRunning = true;
-                requestAnimationFrame((t) => this.loop(t));
+            start() { 
+                if(this.isRunning) return; 
+                this.isRunning = true; 
+                window.addEventListener('resize', () => this.handleResize()); this.handleResize();
+                requestAnimationFrame((t) => this.loop(t)); 
             }
-
+            
             loop(timestamp) {
-                if (!this.lastTime) this.lastTime = timestamp;
-                let deltaTime = timestamp - this.lastTime;
-                this.lastTime = timestamp;
-                if (deltaTime > 100) deltaTime = 100; // Cap lag
-                const timeScale = deltaTime / 16.667;
-
-                this.update(timeScale, timestamp);
-                this.draw(timestamp);
-
+                if (!this.isRunning) return;
+                if (!this.lastTime) this.lastTime = timestamp; let deltaTime = timestamp - this.lastTime; this.lastTime = timestamp;
+                if (deltaTime > 60) deltaTime = 60; const timeScale = deltaTime / 16.667;
+                this.updateStats(timestamp); this.update(timeScale, timestamp); this.draw(timestamp);
                 requestAnimationFrame((t) => this.loop(t));
+            }
+
+            updateStats(timestamp) {
+                this.frameCount++;
+                if (timestamp - this.lastFpsTime >= 1000) {
+                    const fps = this.frameCount; const ping = Math.floor(20 + Math.random() * 20);
+                    if(this.uiStats.fps) this.uiStats.fps.textContent = fps;
+                    if(this.uiStats.ping) this.uiStats.ping.textContent = ping + 'ms';
+                    this.frameCount = 0; this.lastFpsTime = timestamp;
+                    if(this.player) this.leaderboard.update(timestamp, this.player.score, this.player.nickname);
+                }
             }
 
             update(timeScale, timestamp) {
-                // World Pulse Effect
-                const pulse = Math.sin(timestamp * 0.002); 
-                this.worldRadius = Config.Game.worldRadius + (pulse * 40); 
-
-                // Update Player
+                if(!this.player) return;
+                const pulse = Math.sin(timestamp * 0.001); this.worldRadius = Config.Game.worldRadius + (pulse * 30);
                 const inputState = this.input.getInputState();
                 this.player.update(timeScale, inputState, this.worldRadius, this.renderer.highQuality);
-
-                // Update Camera
-                const viewW = this.renderer.width / this.gameZoom;
-                const viewH = this.renderer.height / this.gameZoom;
-                this.camera.x = this.player.x - viewW / 2;
-                this.camera.y = this.player.y - viewH / 2;
+                if(!this.player) return; 
+                this.foodManager.update(this.player, timestamp); 
+                const sizeFactor = Config.Game.baseSnakeRadius / this.player.radius;
+                const dynamicZoom = this.gameZoom * Math.max(0.6, Math.min(1.0, sizeFactor));
+                const viewW = this.renderer.width / dynamicZoom; const viewH = this.renderer.height / dynamicZoom;
+                const targetCamX = this.player.x - viewW / 2; const targetCamY = this.player.y - viewH / 2;
+                this.camera.x = targetCamX; this.camera.y = targetCamY;
+                this.renderZoom = dynamicZoom;
             }
 
             draw(timestamp) {
-                this.renderer.clear();
-                const ctx = this.renderer.ctx;
-
-                // 1. GAME WORLD TRANSFORM
+                if(!this.player) return;
+                this.renderer.clear(); const ctx = this.renderer.ctx;
                 ctx.save();
-                ctx.scale(this.gameZoom, this.gameZoom);
+                ctx.scale(this.renderZoom, this.renderZoom);
                 ctx.translate(-this.camera.x, -this.camera.y);
-
-                // 2. BACKGROUND
+                const viewW = this.renderer.width / this.renderZoom; const viewH = this.renderer.height / this.renderZoom;
                 this.drawBackground(ctx, timestamp);
-
-                // 3. WORLD BOUNDARY
+                this.foodManager.draw(ctx, this.camera.x, this.camera.y, viewW, viewH);
                 this.drawBoundary(ctx, timestamp);
-
-                // 4. ENTITIES
-                this.player.draw(ctx, this.renderer.highQuality);
-
+                this.player.draw(ctx, this.renderer.highQuality, timestamp, { x: this.camera.x, y: this.camera.y, w: viewW, h: viewH }); 
                 ctx.restore();
-
-                // 5. UI / OVERLAYS (No transform)
-                if (this.renderer.highQuality && this.renderer.cache.vignette) {
-                    ctx.drawImage(this.renderer.cache.vignette, 0, 0);
-                }
+                if (this.renderer.highQuality && this.renderer.assets.vignette) { ctx.drawImage(this.renderer.assets.vignette, 0, 0); }
                 this.drawMinimap(ctx);
             }
 
             drawBackground(ctx, timestamp) {
-                const camX = this.camera.x;
-                const camY = this.camera.y;
-                const vw = this.renderer.width / this.gameZoom;
-                const vh = this.renderer.height / this.gameZoom;
-
-                // Fill black base
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(camX, camY, vw, vh);
-
-                const r = Config.Background.hexSize;
-                const xStep = 1.5 * r;
-                const yStep = Math.sqrt(3) * r;
+                const camX = this.camera.x; const camY = this.camera.y;
+                const vw = this.renderer.width / this.renderZoom; const vh = this.renderer.height / this.renderZoom;
+                ctx.fillStyle = '#050508'; ctx.fillRect(camX, camY, vw, vh);
+                const r = Config.Background.hexSize; const xStep = 1.5 * r; const yStep = Math.sqrt(3) * r;
                 
-                const startCol = Math.floor(camX / xStep) - 1;
+                // Optimized Loop Bounds
+                const startCol = Math.floor(camX / xStep) - 1; 
                 const startRow = Math.floor(camY / yStep) - 1;
-                const cols = Math.ceil(vw / xStep) + 2;
+                const cols = Math.ceil(vw / xStep) + 2; 
                 const rows = Math.ceil(vh / yStep) + 2;
-
-                const useCache = !this.renderer.highQuality && this.renderer.cache.mobileHex;
-                const drawR = Math.max(0, r - (Config.Background.hexGap / 2));
+                
+                const hexFrames = this.renderer.assets.hexFrames; const frameCount = hexFrames.length;
+                const animSpeed = Config.Background.animSpeed;
 
                 for (let c = startCol; c < startCol + cols; c++) {
                     for (let rw = startRow; rw < startRow + rows; rw++) {
-                        let hx = c * xStep;
-                        let hy = rw * yStep;
-                        if (c % 2 !== 0) hy += yStep / 2;
-
-                        if (useCache) {
-                            // Blit optimized image
-                            const img = this.renderer.cache.mobileHex;
-                            ctx.drawImage(img, hx - img.width/2, hy - img.height/2);
-                        } else {
-                            // Draw high quality animated hex
-                            const phase = Math.abs(Utils.getPseudoRandom(c, rw) % (Math.PI*2));
-                            const sinVal = Math.sin(timestamp * Config.Background.animSpeed + phase);
-                            const norm = (sinVal + 1) / 2;
-                            const l = Config.Background.centerMinL + (Config.Background.centerMaxL - Config.Background.centerMinL) * norm;
-                            
-                            const grad = ctx.createRadialGradient(hx, hy, 0, hx, hy, drawR);
-                            grad.addColorStop(0, `hsl(${Config.Background.hue}, ${Config.Background.saturation}%, ${l}%)`);
-                            grad.addColorStop(1, `hsl(${Config.Background.hue}, ${Config.Background.saturation}%, ${Config.Background.lightnessEdge}%)`);
-                            
-                            ctx.fillStyle = grad;
-                            ctx.beginPath();
-                            const offsets = this.renderer.cache.hexOffsets;
-                            for(let i=0; i<6; i++) {
-                                if(i===0) ctx.moveTo(hx + offsets[i].x, hy + offsets[i].y);
-                                else ctx.lineTo(hx + offsets[i].x, hy + offsets[i].y);
-                            }
-                            ctx.closePath();
-                            ctx.fill();
-                        }
+                        let hx = c * xStep; let hy = rw * yStep; if (c % 2 !== 0) hy += yStep / 2;
+                        const phase = Math.abs(Utils.getPseudoRandom(c, rw) % (Math.PI*2));
+                        const sinVal = Math.sin(timestamp * animSpeed + phase);
+                        const norm = (sinVal + 1) / 2; const frameIndex = Math.floor(norm * (frameCount - 1));
+                        const img = hexFrames[frameIndex]; if(img) ctx.drawImage(img, hx - img.width/2, hy - img.height/2);
                     }
                 }
             }
 
             drawBoundary(ctx, timestamp) {
-                const zoneThickness = 400; 
-                const grad = ctx.createRadialGradient(0, 0, this.worldRadius, 0, 0, this.worldRadius + zoneThickness);
-                grad.addColorStop(0, Config.Colors.boundary);
-                grad.addColorStop(0.3, 'rgba(255, 0, 0, 0.2)');
-                grad.addColorStop(1, 'rgba(255, 0, 0, 0)');
-
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(0, 0, this.worldRadius + zoneThickness, 0, Math.PI * 2); 
-                ctx.arc(0, 0, this.worldRadius, 0, Math.PI * 2, true);           
-                ctx.fill();
-
-                const pulse = Math.sin(timestamp * 0.002);
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = `rgba(255, 100, 100, ${0.5 + pulse * 0.2})`;
-                ctx.beginPath();
-                ctx.arc(0, 0, this.worldRadius, 0, Math.PI * 2);
-                ctx.stroke();
-
-                ctx.fillStyle = "rgba(255, 50, 50, 0.15)";
-                ctx.font = "200px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("✕", 0, 0); 
+                const r = this.worldRadius; const t = timestamp * 0.001;
+                ctx.beginPath(); ctx.arc(0, 0, r + 2000, 0, Math.PI * 2); ctx.lineWidth = 4000; ctx.strokeStyle = "rgba(30, 5, 5, 0.85)"; ctx.stroke();
+                ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.lineWidth = 40; ctx.strokeStyle = "rgba(255, 0, 50, 0.15)"; ctx.stroke();
+                ctx.lineWidth = 8; ctx.strokeStyle = "#ff0033"; ctx.stroke();
+                ctx.beginPath(); ctx.arc(0, 0, r - 20, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(255, 50, 50, 0.4)"; ctx.setLineDash([80, 120]); ctx.lineDashOffset = t * 40; ctx.stroke();
+                ctx.beginPath(); ctx.arc(0, 0, r + 15, 0, Math.PI * 2); ctx.lineWidth = 4; const opacity = 0.3 + Math.sin(t * 3) * 0.2; ctx.strokeStyle = `rgba(255, 0, 0, ${opacity})`; ctx.setLineDash([30, 30]); ctx.lineDashOffset = -t * 80; ctx.stroke(); ctx.setLineDash([]);
             }
 
             drawMinimap(ctx) {
-                const { radius, margin, playerColor } = Config.Minimap;
-                const centerX = margin + radius;
-                const centerY = margin + radius;
-
-                // Draw Background from Cache
-                if (this.renderer.cache.minimapBg) {
-                    ctx.drawImage(this.renderer.cache.minimapBg, centerX - (radius+margin), centerY - (radius+margin));
-                }
-
-                // Draw Player Dot
-                const normX = this.player.x / this.worldRadius;
-                const normY = this.player.y / this.worldRadius;
-                const dist = Math.hypot(normX, normY);
-                let pX, pY;
-
-                if (dist > 1) {
-                    const a = Math.atan2(normY, normX);
-                    pX = centerX + Math.cos(a) * radius;
-                    pY = centerY + Math.sin(a) * radius;
-                } else {
-                    pX = centerX + normX * radius;
-                    pY = centerY + normY * radius;
-                }
-
-                ctx.fillStyle = playerColor;
-                ctx.beginPath();
-                ctx.arc(pX, pY, 3.5, 0, Math.PI*2);
-                ctx.fill();
+                const { radius, margin, playerColor } = Config.Minimap; const centerX = margin + radius; const centerY = margin + radius;
+                if (this.renderer.assets.minimapBg) { ctx.drawImage(this.renderer.assets.minimapBg, centerX - (radius+margin), centerY - (radius+margin)); }
+                if(!this.player) return;
+                const normX = this.player.x / this.worldRadius; const normY = this.player.y / this.worldRadius;
+                const dist = Math.hypot(normX, normY); let pX, pY;
+                if (dist > 1) { const a = Math.atan2(normY, normX); pX = centerX + Math.cos(a) * radius; pY = centerY + Math.sin(a) * radius; }
+                else { pX = centerX + normX * radius; pY = centerY + normY * radius; }
+                ctx.fillStyle = playerColor; ctx.beginPath(); ctx.arc(pX, pY, 4, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(pX, pY, 4, 0, Math.PI*2); ctx.stroke();
             }
         }
 
-        // --- BOOTSTRAP ---
         window.onload = () => {
             const game = new GameEngine();
-            // Global access for debugging if needed
-            window.WormoneyGame = game;
         };
 
     </script>
